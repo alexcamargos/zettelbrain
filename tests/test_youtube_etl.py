@@ -72,7 +72,7 @@ def test_render_transcript_markdown_has_ingest_article_contract() -> None:
     assert '# Titulo "Especial"' in markdown
     assert "[00:03] Primeira fala" in markdown
     assert "Segunda fala" in markdown
-    assert "`/ingest-youtube`" in markdown
+    assert "`/youtube`" in markdown
 
 
 def test_write_transcript_artifact_and_history_helpers(tmp_path: Path) -> None:
