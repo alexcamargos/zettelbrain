@@ -22,6 +22,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from logger import get_logger
+
 SCHEMA_VERSION = "1"
 DEFAULT_PROVIDER = "hashing"
 FALLBACK_PROVIDER = "hashing"
@@ -809,8 +811,6 @@ class EmbedderFactory:
                 model_name=model_name,
             )
         except RuntimeError:
-            from logger import get_logger
-
             get_logger().warning(
                 "Falha ao conectar ao Ollama. Usando fallback 'hashing' para os embeddings. "
                 "Espaços vetoriais gerados serão incompatíveis com embeddings semânticos."
