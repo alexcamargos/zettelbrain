@@ -27,7 +27,7 @@ Redija um relatório detalhando os resultados obtidos. O texto deve seguir rigor
 - Estruture o corpo do texto em exatamente três parágrafos contínuos, sem usar rótulos literais como "Introdução", "Contexto" ou "Fechamento" no corpo do texto:
   - O **primeiro parágrafo** deve descrever a lacuna conceitual ou o tema consultado, justificando a importância teórica da busca no contexto atual da pesquisa do cofre;
   - O **segundo parágrafo** deve apresentar as conclusões dos 3 artigos selecionados, citando os títulos, principais autores e as variáveis ou metodologias por eles introduzidas, correlacionando-as diretamente;
-  - O **terceiro parágrafo** (conclusão) deve apontar qual dos artigos deve ser baixado para a pasta `raw/papers/` e ser processado prioritariamente via `/ingest-paper`, destacando as hipóteses acadêmicas que serão refinadas a partir dele.
+  - O **terceiro parágrafo** (conclusão) deve apontar qual dos artigos deve ser baixado para a pasta `raw/papers/` e ser processado prioritariamente via `/paper`, destacando as hipóteses acadêmicas que serão refinadas a partir dele.
 - Use **negrito** exclusivamente para destacar constructos teóricos, variáveis analíticas, nomes de algoritmos e métricas técnicas centrais.
 - Não utilize travessões ou emojis.
 - O tom deve ser rigoroso, analítico e de alto nível acadêmico.
