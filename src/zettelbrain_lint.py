@@ -48,11 +48,22 @@ class LintWarning:
 
 
 @dataclass
+class LintFix:
+    """Automatic correction applied by the linter."""
+
+    type: str
+    file_path: str
+    message: str
+    details: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
 class LintResult:
     """Aggregated linter result structure."""
 
     errors: list[LintError] = field(default_factory=list)
     warnings: list[LintWarning] = field(default_factory=list)
+    fixes: list[LintFix] = field(default_factory=list)
     emergent_patterns: list[str] = field(default_factory=list)
     total_notes: int = 0
     literature_count: int = 0
@@ -158,6 +169,46 @@ def _normalize_wikilink_target(value: str) -> str | None:
     return target or None
 
 
+def expected_literature_filename(frontmatter: dict[str, Any]) -> str | None:
+    """Return the expected filename for source-specific literature notes.
+
+    Args:
+        frontmatter: Parsed front matter dictionary.
+
+    Returns:
+        Expected filename with extension, or None when the note is outside the
+        configured source-specific rules.
+
+    """
+    source_kind = str(frontmatter.get("source_kind", "")).strip()
+    title = str(frontmatter.get("title", "")).strip()
+    title_slug = slugify(title)
+    if not title_slug:
+        return None
+
+    if source_kind == "youtube_transcript":
+        author_slug = slugify(_first_frontmatter_value(frontmatter.get("authors")))
+        if not author_slug:
+            return None
+        return f"youtube-{author_slug}-{title_slug}.md"
+
+    if source_kind in {"web_article", "article"}:
+        return f"article-{title_slug}.md"
+
+    return None
+
+
+def _first_frontmatter_value(value: Any) -> str:
+    """Extract the first meaningful scalar from a front matter value."""
+    if isinstance(value, list):
+        for item in value:
+            first = _first_frontmatter_value(item)
+            if first:
+                return first
+        return ""
+    return str(value).strip() if value is not None else ""
+
+
 class ZettelLinter:
     """Static linting and validation engine for ZettelBrain."""
 
@@ -179,6 +230,9 @@ class ZettelLinter:
             OSError: If traversing the vault path fails before per-file parsing starts.
 
         """
+        self.existing_files.clear()
+        self.notes.clear()
+
         # Map every .md file in ZettelBrain.
         for file in self.zettelkasten_path.rglob("*.md"):
             slug = file.stem
@@ -209,6 +263,90 @@ class ZettelLinter:
                         "type": "literature" if in_literature else "permanent",
                         "error": str(exc),
                     }
+
+    def apply_literature_filename_fixes(self) -> list[LintFix]:
+        """Rename source-specific literature notes and update wikilinks.
+
+        Returns:
+            Automatic fixes applied during the pass.
+
+        """
+        fixes: list[LintFix] = []
+
+        for slug, info in sorted(self.notes.items()):
+            if info.get("type") != "literature" or "error" in info:
+                continue
+
+            expected_name = expected_literature_filename(info["frontmatter"])
+            if not expected_name:
+                continue
+
+            current_path = info["path"]
+            if current_path.name == expected_name:
+                continue
+
+            target_path = current_path.with_name(expected_name)
+            if target_path.exists():
+                continue
+
+            old_relative_path = str(current_path.relative_to(self.zettelkasten_path))
+            current_path.rename(target_path)
+            new_slug = target_path.stem
+            updated_references = self._rewrite_wikilink_references(slug, new_slug)
+            new_relative_path = str(target_path.relative_to(self.zettelkasten_path))
+
+            fixes.append(
+                LintFix(
+                    type="literature_filename",
+                    file_path=new_relative_path,
+                    message=(
+                        f"Renamed literature note from {old_relative_path} "
+                        f"to {new_relative_path}."
+                    ),
+                    details={
+                        "previous_path": old_relative_path,
+                        "new_path": new_relative_path,
+                        "expected_filename": expected_name,
+                        "old_slug": slug,
+                        "new_slug": new_slug,
+                        "updated_references": updated_references,
+                    },
+                )
+            )
+
+        return fixes
+
+    def _rewrite_wikilink_references(self, old_slug: str, new_slug: str) -> int:
+        """Rewrite wikilinks pointing at a renamed note.
+
+        Args:
+            old_slug: Previous note slug.
+            new_slug: New note slug.
+
+        Returns:
+            Number of wikilink replacements.
+
+        """
+        pattern = re.compile(r"\[\[([^\]|]+)(\|[^\]]*)?\]\]")
+        replacements = 0
+
+        for file in self.zettelkasten_path.rglob("*.md"):
+            content = file.read_text(encoding="utf-8")
+
+            def replace(match: re.Match[str]) -> str:
+                nonlocal replacements
+                target = match.group(1).strip()
+                alias = match.group(2) or ""
+                if target != old_slug:
+                    return match.group(0)
+                replacements += 1
+                return f"[[{new_slug}{alias}]]"
+
+            updated = pattern.sub(replace, content)
+            if updated != content:
+                file.write_text(updated, encoding="utf-8")
+
+        return replacements
 
     def _extract_wikilinks(self, body: str, frontmatter: dict[str, Any]) -> list[str]:
         """Extract unique [[wikilinks]] from a note body and front matter sources.
@@ -327,7 +465,23 @@ class ZettelLinter:
             frontmatter = info["frontmatter"]
             is_deprecated = frontmatter.get("deprecated", False)
 
-            # 1. Orphan notes in the conceptual graph.
+            # 1. Source-specific literature filename convention.
+            if info["type"] == "literature":
+                expected_name = expected_literature_filename(frontmatter)
+                if expected_name and info["path"].name != expected_name:
+                    result.warnings.append(
+                        LintWarning(
+                            type="literature_filename_pattern",
+                            file_path=info["relative_path"],
+                            message=(
+                                "Literature note filename does not follow the expected "
+                                f"source-specific pattern: {expected_name}."
+                            ),
+                            details={"expected_filename": expected_name},
+                        )
+                    )
+
+            # 2. Orphan notes in the conceptual graph.
             # A literature or permanent note is orphaned when it receives no conceptual links
             # from other literature/ or permanent/ notes.
             conceptual_incoming = [
@@ -343,7 +497,7 @@ class ZettelLinter:
                     )
                 )
 
-            # 2. Minimal graph connection for active permanent notes.
+            # 3. Minimal graph connection for active permanent notes.
             if info["type"] == "permanent" and not is_deprecated:
                 # Only count wikilinks detected in the body, excluding front matter.
                 body_links = re.findall(r"\[\[([^\]|]+)(?:\|[^\]]*)?\]\]", info["body"])
@@ -362,7 +516,7 @@ class ZettelLinter:
                         )
                     )
 
-            # 3. Deprecated notes still active in the graph.
+            # 4. Deprecated notes still active in the graph.
             if is_deprecated:
                 active_referrers = []
                 for referrer in conceptual_incoming:
@@ -393,7 +547,7 @@ class ZettelLinter:
                         )
                     )
 
-        # 4. Emergent patterns: bold terms in 3+ notes without their own note.
+        # 5. Emergent patterns: bold terms in 3+ notes without their own note.
         for term, occurrences in bold_terms_occurrences.items():
             unique_occurrences = list(set(occurrences))
             if len(unique_occurrences) >= 3:
@@ -450,6 +604,14 @@ def print_text_report(result: LintResult) -> None:
     else:
         print("\n[OK] No pending improvement warnings.")
 
+    if result.fixes:
+        print(f"\n[AUTOMATIC FIXES] Applied {len(result.fixes)} fixes:")
+        for fix in result.fixes:
+            print(f"  - [{fix.type.upper()}] in {fix.file_path}:")
+            print(f"    {fix.message}")
+    else:
+        print("\n[OK] No automatic fixes applied.")
+
     if result.emergent_patterns:
         print("\n[EMERGENT PATTERNS] Permanent note candidates found in 3+ distinct notes:")
         for pattern in result.emergent_patterns:
@@ -458,6 +620,44 @@ def print_text_report(result: LintResult) -> None:
         print("\n[OK] No emergent patterns identified.")
 
     print("=" * 60)
+
+
+def run_linter(zettelkasten_path: Path, *, fix_filenames: bool = True) -> LintResult:
+    """Run the linter, optionally applying deterministic filename fixes first.
+
+    Args:
+        zettelkasten_path: Root path of the zettelbrain/ directory.
+        fix_filenames: Whether to rename source-specific literature notes.
+
+    Returns:
+        Aggregated lint results, including fixes applied before validation.
+
+    """
+    linter = ZettelLinter(zettelkasten_path)
+    linter.scan_vault()
+    fixes = linter.apply_literature_filename_fixes() if fix_filenames else []
+
+    if fixes:
+        linter.scan_vault()
+
+    result = linter.run()
+    result.fixes.extend(fixes)
+    result.fixes.sort(key=lambda x: (x.file_path, x.message))
+    return result
+
+
+def lint_result_to_dict(result: LintResult) -> dict[str, Any]:
+    """Serialize lint results to a JSON-compatible dictionary."""
+    return {
+        "total_notes": result.total_notes,
+        "literature_count": result.literature_count,
+        "permanent_count": result.permanent_count,
+        "other_count": result.other_count,
+        "errors": [asdict(e) for e in result.errors],
+        "warnings": [asdict(w) for w in result.warnings],
+        "fixes": [asdict(f) for f in result.fixes],
+        "emergent_patterns": result.emergent_patterns,
+    }
 
 
 @log_skill_execution
@@ -469,19 +669,9 @@ def run_lint_logic() -> dict[str, Any]:
 
     """
     settings = load_settings()
-    linter = ZettelLinter(settings.zettelkasten_path)
-    linter.scan_vault()
-    result = linter.run()
+    result = run_linter(settings.zettelkasten_path, fix_filenames=True)
 
-    return {
-        "total_notes": result.total_notes,
-        "literature_count": result.literature_count,
-        "permanent_count": result.permanent_count,
-        "other_count": result.other_count,
-        "errors": [asdict(e) for e in result.errors],
-        "warnings": [asdict(w) for w in result.warnings],
-        "emergent_patterns": result.emergent_patterns,
-    }
+    return lint_result_to_dict(result)
 
 
 def main() -> None:
@@ -496,25 +686,19 @@ def main() -> None:
         action="store_true",
         help="Return the result as compact JSON.",
     )
+    parser.add_argument(
+        "--no-fix",
+        action="store_true",
+        help="Report literature filename convention issues without renaming files.",
+    )
     args = parser.parse_args()
 
     try:
         settings = load_settings()
-        linter = ZettelLinter(settings.zettelkasten_path)
-        linter.scan_vault()
-        result = linter.run()
+        result = run_linter(settings.zettelkasten_path, fix_filenames=not args.no_fix)
 
         if args.json:
-            output = {
-                "total_notes": result.total_notes,
-                "literature_count": result.literature_count,
-                "permanent_count": result.permanent_count,
-                "other_count": result.other_count,
-                "errors": [asdict(e) for e in result.errors],
-                "warnings": [asdict(w) for w in result.warnings],
-                "emergent_patterns": result.emergent_patterns,
-            }
-            print(json.dumps(output, ensure_ascii=False, indent=2))
+            print(json.dumps(lint_result_to_dict(result), ensure_ascii=False, indent=2))
         else:
             print_text_report(result)
 
