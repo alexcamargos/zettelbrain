@@ -260,6 +260,70 @@ def test_linter_sources_with_alias_do_not_create_false_dead_links(tmp_path: Path
     assert "nota-base" not in dead_link_targets
 
 
+def test_linter_normalizes_permanent_sources_for_obsidian(tmp_path: Path) -> None:
+    """Garante que sources ambíguas sejam reescritas como wikilinks literais."""
+    zettel_dir = tmp_path / "zettelbrain"
+    literature_dir = zettel_dir / "literature"
+    permanent_dir = zettel_dir / "permanent"
+    literature_dir.mkdir(parents=True)
+    permanent_dir.mkdir(parents=True)
+
+    (literature_dir / "nota-base.md").write_text(
+        "---\ntype: literature\n---\nConteudo.",
+        encoding="utf-8",
+    )
+    permanent_file = permanent_dir / "nota-principal.md"
+    permanent_file.write_text(
+        "---\n"
+        "type: permanent\n"
+        "sources: [[nota-base]]\n"
+        "---\n"
+        "Corpo com [[nota-base]] e [[nota-base]].",
+        encoding="utf-8",
+    )
+
+    result = run_linter(zettel_dir)
+
+    content = permanent_file.read_text(encoding="utf-8")
+    assert 'sources:\n  - "[[nota-base]]"' in content
+    assert [fix for fix in result.fixes if fix.type == "permanent_sources_format"]
+    dead_link_targets = [
+        error.details.get("target") for error in result.errors if error.type == "dead_link"
+    ]
+    assert "nota-base" not in dead_link_targets
+
+
+def test_linter_warns_about_unsafe_permanent_sources_without_fix(tmp_path: Path) -> None:
+    """Garante aviso quando sources não está em formato resolvível pelo Obsidian."""
+    zettel_dir = tmp_path / "zettelbrain"
+    literature_dir = zettel_dir / "literature"
+    permanent_dir = zettel_dir / "permanent"
+    literature_dir.mkdir(parents=True)
+    permanent_dir.mkdir(parents=True)
+
+    (literature_dir / "nota-base.md").write_text(
+        "---\ntype: literature\n---\nConteudo.",
+        encoding="utf-8",
+    )
+    permanent_file = permanent_dir / "nota-principal.md"
+    permanent_file.write_text(
+        "---\n"
+        "type: permanent\n"
+        "sources: [[nota-base]]\n"
+        "---\n"
+        "Corpo com [[nota-base]] e [[outra-nota]].",
+        encoding="utf-8",
+    )
+
+    result = run_linter(zettel_dir, fix_sources=False)
+
+    warnings = [
+        warning for warning in result.warnings if warning.type == "permanent_sources_format"
+    ]
+    assert len(warnings) == 1
+    assert "sources: [[nota-base]]" in permanent_file.read_text(encoding="utf-8")
+
+
 def test_linter_warns_about_literature_filename_pattern_without_fix(tmp_path: Path) -> None:
     """Verifica a regra de nomes para notas de literatura sem aplicar correção."""
     zettel_dir = tmp_path / "zettelbrain"
