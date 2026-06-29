@@ -105,9 +105,9 @@ flowchart TD
 ### `/lint`
 
 - Regras: [../skills/lint.md](../skills/lint.md)
-- Aciona o linter Python `zettelbrain_lint.py` via CLI ou ferramenta MCP.
-- Verifica links mortos, notas orfas, conexao minima, referencias a notas deprecadas e padroes emergentes.
-- Pode atualizar `zettelbrain/overview.md` e gerar relatorios em `zettelbrain/syntheses/`.
+- Usa o linter Python `zettelbrain_lint.py` via CLI ou ferramenta MCP como etapa deterministica.
+- O linter deterministico verifica links mortos, notas orfas, conexao minima, referencias a notas deprecadas e padroes emergentes.
+- A skill completa, executada pelo agente, pode atualizar `zettelbrain/overview.md`, gerar relatorios em `zettelbrain/syntheses/` e registrar a operacao em `.state/log.md`.
 
 ## Motores locais
 
@@ -115,7 +115,7 @@ flowchart TD
 
 - Codigo: [../src/setup.py](../src/setup.py)
 - CLI: `uv run install bootstrap`, `uv run install gemini`, `uv run install cursor`, `uv run install clean`.
-- `bootstrap` ou `local`: cria a estrutura ignorada pelo Git para `raw/`, `zettelbrain/`, `logs/`, `.state/` e `.pageindex/`.
+- `bootstrap` ou `local`: cria a estrutura local para `raw/`, `zettelbrain/`, `logs/`, `.state/` e `.pageindex/`; em `.state/`, apenas caches e historico gerados sao ignorados pelo Git.
 - `gemini`: cria `.gemini/settings.json` e sincroniza `skills/`.
 - `cursor`: cria `.cursor/mcp.json` e compila [ZETTELBRAIN.md](../ZETTELBRAIN.md) com `skills/`.
 - `clean`: remove configuracoes locais geradas.
@@ -139,10 +139,11 @@ flowchart TD
 - Codigo: [../src/mcp/server.py](../src/mcp/server.py)
 - Health check: `uv run python src/mcp/server.py --health-json`
 - Execucao: `uv run zettelbrain-mcp` ou `uv run zb-mcp`.
-- Ferramentas detalhadas em [mcp-tools.md](mcp-tools.md).
+- Ferramentas detalhadas em [mcp-tools.md](mcp-tools.md), incluindo leitura e escrita controlada de Markdown em `zettelbrain/`.
 
 ### Linter
 
 - Codigo: [../src/zettelbrain_lint.py](../src/zettelbrain_lint.py)
 - CLI: `uv run zettelbrain-lint` ou `uv run zb-lint`.
 - JSON: `uv run zettelbrain-lint --json`.
+- O CLI nao sobrescreve `overview.md` nem cria relatorios; essas escritas pertencem ao workflow `/lint`.
