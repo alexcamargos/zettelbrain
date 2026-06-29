@@ -87,6 +87,8 @@ confidence: high
 
 O campo **`confidence`** (`high`, `medium`, `low`) é **opcional** em literatura de paper; use `medium` ou `low` quando metadados incompletos, OCR fraco ou inferências arriscadas.
 
+Convenção de nome para notas de literatura com origem web informal: transcrições do YouTube devem usar `youtube-[autor]-[titulo-do-video].md`, usando o primeiro valor de `authors` como autor; artigos web devem usar `article-[titulo-do-artigo].md`. O linter aplica essa regra de forma determinística, renomeia arquivos fora do padrão quando não houver conflito e atualiza wikilinks para o novo slug.
+
 ### Notas de literatura (fonte web informal, `raw/articles/`)
 Use quando `source_kind: web_article` (ou valor mais específico acordado com o usuário). Campos opcionais comuns: `url`, `retrieved_at` (data de recuperação ISO), `publisher_kind` (blog, wiki, docs, editorial, etc.). O corpo da nota deve deixar explícito o **caráter informal** da fonte.
 
