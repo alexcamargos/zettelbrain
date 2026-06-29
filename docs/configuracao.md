@@ -133,7 +133,7 @@ uv run zb-article-etl --url "https://exemplo.com/artigo"
 uv run zb-article-etl --url "https://exemplo.com/artigo" --filename "meu-artigo.md"
 ```
 
-A saida fica em `raw/articles/` e deve ser processada por `/ingest-article` antes de entrar em `zettelbrain/`.
+A saida fica em `raw/articles/` e deve ser processada por `/article` antes de entrar em `zettelbrain/`.
 
 ## ETL de YouTube
 
@@ -142,7 +142,7 @@ uv run zb-youtube-etl --dry-run
 uv run zb-youtube-etl --limit 5
 ```
 
-A saida fica em `raw/youtube/` e deve ser processada por `/ingest-youtube`.
+A saida fica em `raw/youtube/` e deve ser processada por `/youtube`.
 
 ## Embeddings
 
