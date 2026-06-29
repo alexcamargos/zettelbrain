@@ -32,12 +32,12 @@ Se o usuário aprovar a criação das notas preliminares, gere os arquivos aplic
 **Regras estritas para a geração do texto das notas:**
 - É terminantemente proibido o uso de listas ou marcadores (bullet points) no corpo das notas.
 - Toda nota deve iniciar com um título Markdown (`# Título da nota`) imediatamente após o frontmatter YAML.
-- O texto de cada nota deve ser contínuo e estruturado logicamente em três etapas, Introdução, Contexto e Fechamento, porém sem inserir rótulos literais como `Introdução.` `Contexto.` `Fechamento.` antes dos parágrafos.
+- O texto de cada nota deve ser contínuo e estruturado logicamente em parágrafos de prosa, sem inserir rótulos literais como `Introdução.` `Contexto.` `Fechamento.` antes dos parágrafos. Não imponha três parágrafos como padrão para a nota de literatura; quando o resumo e a introdução forem conceitualmente ricos, escreva o suficiente para cobrir problema de pesquisa, conceitos iniciais, justificativa, lacunas e potencial de conexão com o cofre.
 - Utilize **negrito** exclusivamente para destacar as palavras-chave e conceitos centrais, facilitando a recuperação da informação.
 - Não utilize travessões. Empregue vírgulas ou construa períodos curtos e diretos para explicações.
 - Não utilize emojis.
 
-1. **Nota de Literatura:** Crie o arquivo em `zettelbrain/literature/` com frontmatter do `ZETTELBRAIN.md`, `confidence` adequado, `source_file` sob `raw/papers/`, referência ABNT e resumo da introdução.
+1. **Nota de Literatura:** Crie o arquivo em `zettelbrain/literature/` com frontmatter do `ZETTELBRAIN.md`, `confidence` adequado, `source_file` sob `raw/papers/`, referência ABNT e análise em prosa da introdução. A nota deve registrar o argumento preliminar da fonte, o problema de pesquisa, os conceitos ou variáveis introduzidos, a promessa metodológica quando aparecer, limitações da leitura parcial e critérios para decidir se a leitura completa se justifica.
 2. **Notas Permanentes:** Crie notas atômicas em `zettelbrain/permanent/` apenas para os conceitos validados. Para cada permanente **nova**, pesquise notas relacionadas por tema e conecte o corpo com wikilinks relevantes. Aplique a **ligação mínima ao grafo** do `ZETTELBRAIN.md` (dois wikilinks no corpo quando existirem candidatos); caso impossível, registre no log.
 
 ### Etapa 4: Catalogação
