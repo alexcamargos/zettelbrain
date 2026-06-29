@@ -1,12 +1,12 @@
-# /ingest-paper (Ingestão de documentos formais em papers)
+# /paper (Ingestão de documentos formais em papers)
 
 ## Objetivo
-Processar **documentos formais** em **`raw/papers/`** (PDF ou equivalente típico de artigos, capítulos ou relatórios acadêmicos densos), extrair referência no padrão **ABNT**, mapear argumentos centrais e aguardar a validação humana antes de popular o ZettelBrain. Conteúdo informal da internet em Markdown fica em **`raw/articles/`** e usa o skill **`/ingest-article`**; transcrições do YouTube geradas pelo ETL ficam em **`raw/youtube/`** e usam **`/ingest-youtube`**.
+Processar **documentos formais** em **`raw/papers/`** (PDF ou equivalente típico de artigos, capítulos ou relatórios acadêmicos densos), extrair referência no padrão **ABNT**, mapear argumentos centrais e aguardar a validação humana antes de popular o ZettelBrain. Conteúdo informal da internet em Markdown fica em **`raw/articles/`** e usa o skill **`/article`**; transcrições do YouTube geradas pelo ETL ficam em **`raw/youtube/`** e usam **`/youtube`**.
 
 ## Gatilho
-Acionado quando o usuário disser `gemini "Execute a skill /ingest-paper no arquivo raw/papers/[nome_do_arquivo]"` ou `/ingest-paper raw/papers/[nome_do_arquivo]`.
+Acionado quando o usuário disser `gemini "Execute a skill /paper no arquivo raw/papers/[nome_do_arquivo]"` ou `/paper raw/papers/[nome_do_arquivo]`.
 
-**Log:** Ao acrescentar entradas em `.state/log.md`, use estritamente o formato definido no `ZETTELBRAIN.md` (seção Convenção do log operacional). No cabeçalho da entrada use o nome da skill **`/ingest-paper`**. Liste no corpo da entrada **todos** os caminhos de arquivos tocados ou criados nesta execução.
+**Log:** Ao acrescentar entradas em `.state/log.md`, use estritamente o formato definido no `ZETTELBRAIN.md` (seção Convenção do log operacional). No cabeçalho da entrada use o nome da skill **`/paper`**. Liste no corpo da entrada **todos** os caminhos de arquivos tocados ou criados nesta execução.
 
 ## Fluxo de Execução (Workflow)
 
