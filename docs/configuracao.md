@@ -88,6 +88,12 @@ Linter JSON:
 uv run zettelbrain-lint --json
 ```
 
+Para auditar sem aplicar a correcao automatica dos nomes de notas de literatura:
+
+```powershell
+uv run zettelbrain-lint --no-fix
+```
+
 Testes:
 
 ```powershell
