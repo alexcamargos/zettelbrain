@@ -1,14 +1,14 @@
-# /ingest-article (Ingestão de artigos da web)
+# /article (Ingestão de artigos da web)
 
 ## Objetivo
 Processar **apenas** arquivos Markdown em **`raw/articles/`** que representem conteúdo informal da internet (blog, wiki, documentação de produto, newsletter, fórum exportado, notícia, etc.). Estes materiais **não** são tratados como papers formais: não se assume revisão por pares, estrutura IMRaD nem metadados acadêmicos completos. O fluxo prioriza **rastreabilidade** (URL, data de recuperação), **avaliação crítica da fonte** (viés, patrocínio, desatualização, link quebrável) e extração de ideias úteis ao cofre, com linguagem explícita sobre **limites de evidência**.
 
-**Exclusão explícita:** arquivos com `source_kind: youtube_transcript` (armazenados em `raw/youtube/`) devem ser processados por `/ingest-youtube`, não por `/ingest-article`.
+**Exclusão explícita:** arquivos com `source_kind: youtube_transcript` (armazenados em `raw/youtube/`) devem ser processados por `/youtube`, não por `/article`.
 
 ## Gatilho
-Acionado quando o usuário disser `gemini "Execute a skill /ingest-article no arquivo raw/articles/[nome].md"` ou `/ingest-article raw/articles/[nome].md`.
+Acionado quando o usuário disser `gemini "Execute a skill /article no arquivo raw/articles/[nome].md"` ou `/article raw/articles/[nome].md`.
 
-**Log:** Ao acrescentar entradas em `.state/log.md`, use estritamente o formato definido no `ZETTELBRAIN.md` (seção Convenção do log operacional). No cabeçalho use **`/ingest-article`** e liste todos os arquivos tocados ou criados.
+**Log:** Ao acrescentar entradas em `.state/log.md`, use estritamente o formato definido no `ZETTELBRAIN.md` (seção Convenção do log operacional). No cabeçalho use **`/article`** e liste todos os arquivos tocados ou criados.
 
 ## Fluxo de Execução (Workflow)
 
@@ -40,9 +40,9 @@ Aplicando as **Regras Globais de Estilo** do `ZETTELBRAIN.md` (título obrigató
 
 ### Etapa 5: Catalogação e estado
 1. Atualize `zettelbrain/index.md` (seção **Fontes web informais** ou equivalente já existente no índice).
-2. Atualize o `.state/log.md` com cabeçalho **`/ingest-article`** e **lista explícita** de todos os caminhos relativos criados ou alterados (literatura, permanentes, `index.md`, e notas atualizadas na revisão cruzada).
+2. Atualize o `.state/log.md` com cabeçalho **`/article`** e **lista explícita** de todos os caminhos relativos criados ou alterados (literatura, permanentes, `index.md`, e notas atualizadas na revisão cruzada).
 3. Atualize o `.state/hot.md` como nas demais skills de ingestão.
 
 ## Notas de desenho
-* **Papers** continuam exclusivamente em `/ingest-paper` e `/ingest-paper-intro` sobre `raw/papers/`.
-* Se o usuário apontar um `.md` que na verdade é pré-print ou relatório técnico longo com estrutura de paper, recomende avaliar se o fluxo `/ingest-paper` após conversão para PDF ou outro formato formal não seria mais adequado.
+* **Papers** continuam exclusivamente em `/paper` e `/paper-intro` sobre `raw/papers/`.
+* Se o usuário apontar um `.md` que na verdade é pré-print ou relatório técnico longo com estrutura de paper, recomende avaliar se o fluxo `/paper` após conversão para PDF ou outro formato formal não seria mais adequado.
