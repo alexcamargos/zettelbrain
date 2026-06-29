@@ -13,6 +13,7 @@ import pytest
 from zettelbrain_lint import (
     ZettelLinter,
     parse_frontmatter_and_body,
+    run_linter,
     slugify,
 )
 
@@ -257,3 +258,106 @@ def test_linter_sources_with_alias_do_not_create_false_dead_links(tmp_path: Path
     ]
     assert "nota-base|Resumo" not in dead_link_targets
     assert "nota-base" not in dead_link_targets
+
+
+def test_linter_warns_about_literature_filename_pattern_without_fix(tmp_path: Path) -> None:
+    """Verifica a regra de nomes para notas de literatura sem aplicar correção."""
+    zettel_dir = tmp_path / "zettelbrain"
+    literature_dir = zettel_dir / "literature"
+    literature_dir.mkdir(parents=True)
+
+    (literature_dir / "lit-youtube-derivada.md").write_text(
+        "---\n"
+        "type: literature\n"
+        "source_kind: youtube_transcript\n"
+        'title: "O que é uma Derivada?"\n'
+        "authors: [Canal Matematica]\n"
+        "---\n"
+        "Conteudo.",
+        encoding="utf-8",
+    )
+
+    result = run_linter(zettel_dir, fix_filenames=False)
+
+    filename_warnings = [
+        warning for warning in result.warnings if warning.type == "literature_filename_pattern"
+    ]
+    assert len(filename_warnings) == 1
+    assert filename_warnings[0].details["expected_filename"] == (
+        "youtube-canal-matematica-o-que-e-uma-derivada.md"
+    )
+    assert not result.fixes
+
+
+def test_linter_renames_youtube_literature_and_updates_wikilinks(tmp_path: Path) -> None:
+    """Garante correção automática do nome e dos wikilinks para notas do YouTube."""
+    zettel_dir = tmp_path / "zettelbrain"
+    literature_dir = zettel_dir / "literature"
+    permanent_dir = zettel_dir / "permanent"
+    literature_dir.mkdir(parents=True)
+    permanent_dir.mkdir()
+
+    old_note = literature_dir / "lit-youtube-derivada.md"
+    old_note.write_text(
+        "---\n"
+        "type: literature\n"
+        "source_kind: youtube_transcript\n"
+        'title: "O que é uma Derivada?"\n'
+        "authors: [Canal Matematica]\n"
+        "---\n"
+        "Conteudo.",
+        encoding="utf-8",
+    )
+    index_file = zettel_dir / "index.md"
+    index_file.write_text("- [[lit-youtube-derivada]]\n", encoding="utf-8")
+    permanent_file = permanent_dir / "perm-derivada.md"
+    permanent_file.write_text(
+        "---\n"
+        "type: permanent\n"
+        "sources:\n"
+        '  - "[[lit-youtube-derivada|Video]]"\n'
+        "---\n"
+        "Texto com [[lit-youtube-derivada]].",
+        encoding="utf-8",
+    )
+
+    result = run_linter(zettel_dir)
+
+    new_slug = "youtube-canal-matematica-o-que-e-uma-derivada"
+    new_note = literature_dir / f"{new_slug}.md"
+    assert not old_note.exists()
+    assert new_note.exists()
+    assert len(result.fixes) == 1
+    assert result.fixes[0].details["old_slug"] == "lit-youtube-derivada"
+    assert result.fixes[0].details["new_slug"] == new_slug
+    assert result.fixes[0].details["updated_references"] == 3
+    assert f"[[{new_slug}]]" in index_file.read_text(encoding="utf-8")
+    permanent_content = permanent_file.read_text(encoding="utf-8")
+    assert f"[[{new_slug}|Video]]" in permanent_content
+    assert f"[[{new_slug}]]" in permanent_content
+    assert not [w for w in result.warnings if w.type == "literature_filename_pattern"]
+
+
+def test_linter_renames_article_literature(tmp_path: Path) -> None:
+    """Garante correção automática do nome para artigos web."""
+    zettel_dir = tmp_path / "zettelbrain"
+    literature_dir = zettel_dir / "literature"
+    literature_dir.mkdir(parents=True)
+
+    old_note = literature_dir / "lit-web-artigo.md"
+    old_note.write_text(
+        "---\n"
+        "type: literature\n"
+        "source_kind: web_article\n"
+        'title: "Título do Artigo"\n'
+        "---\n"
+        "Conteudo.",
+        encoding="utf-8",
+    )
+
+    result = run_linter(zettel_dir)
+
+    assert not old_note.exists()
+    assert (literature_dir / "article-titulo-do-artigo.md").exists()
+    assert len(result.fixes) == 1
+    assert result.fixes[0].details["new_slug"] == "article-titulo-do-artigo"
