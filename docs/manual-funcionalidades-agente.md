@@ -106,7 +106,7 @@ flowchart TD
 
 - Regras: [../skills/lint.md](../skills/lint.md)
 - Usa o linter Python `zettelbrain_lint.py` via CLI ou ferramenta MCP como etapa deterministica.
-- O linter deterministico verifica links mortos, notas orfas, conexao minima, referencias a notas deprecadas e padroes emergentes.
+- O linter deterministico verifica links mortos, notas orfas, conexao minima, referencias a notas deprecadas, nomes de notas de literatura e padroes emergentes.
 - A skill completa, executada pelo agente, pode atualizar `zettelbrain/overview.md`, gerar relatorios em `zettelbrain/syntheses/` e registrar a operacao em `.state/log.md`.
 
 ## Motores locais
@@ -146,4 +146,5 @@ flowchart TD
 - Codigo: [../src/zettelbrain_lint.py](../src/zettelbrain_lint.py)
 - CLI: `uv run zettelbrain-lint` ou `uv run zb-lint`.
 - JSON: `uv run zettelbrain-lint --json`.
+- Por padrao, o CLI corrige nomes de notas de literatura web informal e atualiza wikilinks; use `--no-fix` para apenas reportar divergencias.
 - O CLI nao sobrescreve `overview.md` nem cria relatorios; essas escritas pertencem ao workflow `/lint`.
