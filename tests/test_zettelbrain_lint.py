@@ -61,8 +61,8 @@ def test_parse_frontmatter_and_body_supports_indented_yaml_lists() -> None:
         "  - risco\n"
         "  - credito\n"
         "sources:\n"
-        "  - \"[[nota-literatura-1]]\"\n"
-        "  - \"[[nota-literatura-2]]\"\n"
+        '  - "[[nota-literatura-1]]"\n'
+        '  - "[[nota-literatura-2]]"\n'
         "deprecated: false\n"
         "---\n"
         "Corpo com [[nota-relacionada]]."
@@ -87,6 +87,7 @@ def mock_zettel_vault(tmp_path: Path) -> Generator[Path, None, None]:
 
     Yields:
         Path: O caminho do diretório temporário zettelbrain.
+
     """
     zettel_dir = tmp_path / "zettelbrain"
     zettel_dir.mkdir()
@@ -116,7 +117,7 @@ def mock_zettel_vault(tmp_path: Path) -> Generator[Path, None, None]:
         "type: permanent\n"
         "id: 202606060002\n"
         "sources:\n"
-        "  - \"[[lit-linear-regression]]\"\n"
+        '  - "[[lit-linear-regression]]"\n'
         "---\n"
         "Regressão linear é uma técnica estatística.\n"
         "Ela busca encontrar a relação de **Regressão Linear** entre variáveis.\n"
@@ -239,18 +240,11 @@ def test_linter_sources_with_alias_do_not_create_false_dead_links(tmp_path: Path
     permanent_dir.mkdir(parents=True)
 
     (literature_dir / "nota-base.md").write_text(
-        "---\n"
-        'title: "Nota Base"\n'
-        "---\n"
-        "Conteudo.",
+        '---\ntitle: "Nota Base"\n---\nConteudo.',
         encoding="utf-8",
     )
     (permanent_dir / "nota-principal.md").write_text(
-        "---\n"
-        "sources:\n"
-        '  - "[[nota-base|Resumo]]"\n'
-        "---\n"
-        "Corpo sem links extras.",
+        '---\nsources:\n  - "[[nota-base|Resumo]]"\n---\nCorpo sem links extras.',
         encoding="utf-8",
     )
 
@@ -258,6 +252,8 @@ def test_linter_sources_with_alias_do_not_create_false_dead_links(tmp_path: Path
     linter.scan_vault()
     result = linter.run()
 
-    dead_link_targets = [error.details.get("target") for error in result.errors if error.type == "dead_link"]
+    dead_link_targets = [
+        error.details.get("target") for error in result.errors if error.type == "dead_link"
+    ]
     assert "nota-base|Resumo" not in dead_link_targets
     assert "nota-base" not in dead_link_targets

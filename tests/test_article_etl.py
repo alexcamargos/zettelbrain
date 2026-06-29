@@ -28,6 +28,7 @@ class MockMetaData:
         title: Title of the article.
         author: Author of the article.
         date: Publication date of the article.
+
     """
 
     def __init__(self, title: str, author: str, date: str) -> None:
@@ -37,6 +38,7 @@ class MockMetaData:
             title: Title of the article.
             author: Author of the article.
             date: Publication date of the article.
+
         """
         self.title = title
         self.author = author
@@ -48,6 +50,7 @@ def test_slugify() -> None:
 
     Returns:
         None
+
     """
     assert slugify("Meu Artigo Especial! 123") == "meu-artigo-especial-123"
     assert slugify("Python -- Ingestion ETL") == "python-ingestion-etl"
@@ -62,6 +65,7 @@ def test_fetch_and_clean_article_success(mocker: Any) -> None:
 
     Returns:
         None
+
     """
     mocker.patch("trafilatura.fetch_url", return_value="<html>HTML de Teste</html>")
     mocker.patch(
@@ -88,6 +92,7 @@ def test_fetch_and_clean_article_fetch_failure(mocker: Any) -> None:
 
     Returns:
         None
+
     """
     mocker.patch("trafilatura.fetch_url", return_value=None)
 
@@ -104,6 +109,7 @@ def test_fetch_and_clean_article_extraction_failure(mocker: Any) -> None:
 
     Returns:
         None
+
     """
     mocker.patch("trafilatura.fetch_url", return_value="<html>HTML</html>")
     mocker.patch("trafilatura.extract", return_value=None)
@@ -121,6 +127,7 @@ def test_fetch_and_clean_article_empty_url_raises_error() -> None:
 
     Raises:
         ValueError: When the URL is empty.
+
     """
     with pytest.raises(ValueError, match="Article URL cannot be empty."):
         fetch_and_clean_article("   ")
@@ -135,6 +142,7 @@ def test_save_raw_article_success(mocker: Any, tmp_path: Path) -> None:
 
     Returns:
         None
+
     """
     mocker.patch(
         "ingestion.article_etl.fetch_and_clean_article",
@@ -171,6 +179,7 @@ def test_save_raw_article_custom_filename(mocker: Any, tmp_path: Path) -> None:
 
     Returns:
         None
+
     """
     mocker.patch(
         "ingestion.article_etl.fetch_and_clean_article",
@@ -199,6 +208,7 @@ def test_save_raw_article_failure(mocker: Any, tmp_path: Path) -> None:
 
     Returns:
         None
+
     """
     mocker.patch("ingestion.article_etl.fetch_and_clean_article", return_value=None)
 
@@ -304,7 +314,9 @@ def test_main_returns_failure_exit_code(mocker: MockerFixture, tmp_path: Path) -
     settings = mocker.Mock(raw_articles_path=tmp_path, logs_path=tmp_path / "logs")
     mocker.patch("ingestion.article_etl.load_settings", return_value=settings)
     mocker.patch("ingestion.article_etl.configure_logging")
-    save_raw_article_mock = mocker.patch("ingestion.article_etl.save_raw_article", return_value=None)
+    save_raw_article_mock = mocker.patch(
+        "ingestion.article_etl.save_raw_article", return_value=None
+    )
     mock_logger = mocker.Mock()
     mocker.patch("ingestion.article_etl.get_logger", return_value=mock_logger)
 

@@ -27,6 +27,7 @@ def test_hashing_embedding_is_deterministic_and_normalized() -> None:
 
     Returns:
         None
+
     """
     first = hashing_embedding("credito cooperativo risco", dimensions=32)
     second = hashing_embedding("credito cooperativo risco", dimensions=32)
@@ -41,6 +42,7 @@ def test_hashing_embedding_ignores_common_stop_words() -> None:
 
     Returns:
         None
+
     """
     with_stop_words = hashing_embedding(
         "credito para com uma cooperativo and the with",
@@ -56,6 +58,7 @@ def test_hashing_embedding_returns_zero_vector_for_only_stop_words() -> None:
 
     Returns:
         None
+
     """
     vector = hashing_embedding("para com uma este and the with for", dimensions=16)
 
@@ -70,6 +73,7 @@ def test_build_embedding_index_and_semantic_search_rank_relevant_doc(tmp_path: P
 
     Returns:
         None
+
     """
     zettelbrain = tmp_path / "zettelbrain"
     zettelbrain.mkdir()
@@ -119,6 +123,7 @@ def test_build_embedding_index_only_includes_conceptual_note_folders(tmp_path: P
 
     Returns:
         None
+
     """
     zettelbrain = tmp_path / "zettelbrain"
     zettelbrain.mkdir()
@@ -153,6 +158,7 @@ def test_embedding_status_reports_existing_index(tmp_path: Path) -> None:
 
     Returns:
         None
+
     """
     zettelbrain = tmp_path / "zettelbrain"
     zettelbrain.mkdir()
@@ -189,6 +195,7 @@ def test_ollama_provider_falls_back_to_hashing_when_endpoint_fails(tmp_path: Pat
 
     Returns:
         None
+
     """
     zettelbrain = tmp_path / "zettelbrain"
     zettelbrain.mkdir()
@@ -214,6 +221,7 @@ def test_embed_text_uses_hashing_provider() -> None:
 
     Returns:
         None
+
     """
     vector = embed_text(
         "pearls capital",
@@ -235,6 +243,7 @@ def test_embed_text_uses_ollama_provider(monkeypatch: pytest.MonkeyPatch) -> Non
 
     Returns:
         None
+
     """
 
     class FakeResponse:
@@ -280,6 +289,7 @@ def test_semantic_search_labels_ollama_index_engine(
 
     Returns:
         None
+
     """
     zettelbrain = tmp_path / "zettelbrain"
     zettelbrain.mkdir()
@@ -315,13 +325,14 @@ def test_semantic_search_labels_ollama_index_engine(
 def test_semantic_search_raises_value_error_on_provider_mismatch(
     tmp_path: Path,
 ) -> None:
-    """Test that semantic_search raises ValueError on mismatch between configured and active index provider.
+    """Test semantic_search raises ValueError for provider mismatches.
 
     Args:
         tmp_path: Pytest temporary directory fixture.
 
     Returns:
         None
+
     """
     zettelbrain = tmp_path / "zettelbrain"
     zettelbrain.mkdir()
@@ -349,4 +360,3 @@ def test_semantic_search_raises_value_error_on_provider_mismatch(
             endpoint="http://localhost:11434/api/embeddings",
             rebuild_if_missing=False,
         )
-

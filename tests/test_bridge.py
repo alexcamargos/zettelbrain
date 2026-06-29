@@ -13,6 +13,7 @@ def test_find_semantic_bridge_missing_index() -> None:
 
     Returns:
         None
+
     """
     with pytest.raises(FileNotFoundError):
         find_semantic_bridge(Path("invalid/index_path.json"))
@@ -26,6 +27,7 @@ def test_find_semantic_bridge_insufficient_documents(tmp_path: Path) -> None:
 
     Returns:
         None
+
     """
     zettelbrain = tmp_path / "zettelbrain"
     permanent = zettelbrain / "permanent"
@@ -55,6 +57,7 @@ def test_find_semantic_bridge_success(tmp_path: Path) -> None:
 
     Returns:
         None
+
     """
     zettelbrain = tmp_path / "zettelbrain"
     permanent = zettelbrain / "permanent"
@@ -94,6 +97,7 @@ def test_find_semantic_bridge_no_match(tmp_path: Path) -> None:
 
     Returns:
         None
+
     """
     zettelbrain = tmp_path / "zettelbrain"
     permanent = zettelbrain / "permanent"

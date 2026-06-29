@@ -25,6 +25,7 @@ def test_parse_youtube_feed_extracts_video_metadata() -> None:
 
     Returns:
         None
+
     """
     xml = """<?xml version="1.0" encoding="UTF-8"?>
     <feed xmlns:yt="http://www.youtube.com/xml/schemas/2015"
@@ -55,6 +56,7 @@ def test_render_transcript_markdown_has_ingest_article_contract() -> None:
 
     Returns:
         None
+
     """
     video = FeedVideo("abc123", 'Titulo "Especial"', "https://youtube.test/watch?v=abc123")
     transcript = [
@@ -80,6 +82,7 @@ def test_write_transcript_artifact_and_history_helpers(tmp_path: Path) -> None:
 
     Returns:
         None
+
     """
     video = FeedVideo("abc123", "Meu Video de Teste", "https://youtube.test/watch?v=abc123")
     output = write_transcript_artifact(tmp_path, video, [TranscriptSegment("conteudo")])
@@ -94,7 +97,6 @@ def test_write_transcript_artifact_and_history_helpers(tmp_path: Path) -> None:
 
 def test_youtube_etl_continues_after_individual_transcript_failure() -> None:
     """Test that a transcript failure does not abort later videos in the batch."""
-
     first_video = FeedVideo("sem-legenda", "Sem legenda", "https://youtube.test/watch?v=1")
     second_video = FeedVideo("ok", "Com legenda", "https://youtube.test/watch?v=2")
     feed_reader = _FakeFeedReader([first_video, second_video])

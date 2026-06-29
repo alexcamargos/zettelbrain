@@ -30,6 +30,7 @@ def test_sha256_file(tmp_path: Path) -> None:
 
     Returns:
         None
+
     """
     file_path = tmp_path / "paper.pdf"
     file_path.write_bytes(b"abc")
@@ -47,6 +48,7 @@ def test_list_and_read_pageindex_cache(tmp_path: Path) -> None:
 
     Returns:
         None
+
     """
     document_id = "a" * 64
     document_root = tmp_path / document_id
@@ -96,6 +98,7 @@ def test_resolve_pdf_cache_by_source_path(tmp_path: Path) -> None:
 
     Returns:
         None
+
     """
     vault = tmp_path / "vault"
     raw_papers = vault / "raw" / "papers"
@@ -127,6 +130,7 @@ def test_index_pdf_with_command_reports_missing_configuration(tmp_path: Path) ->
 
     Returns:
         None
+
     """
     vault = tmp_path / "vault"
     raw_papers = vault / "raw" / "papers"
@@ -159,6 +163,7 @@ def test_index_pdf_with_command_persists_stdout_tree(
 
     Returns:
         None
+
     """
     vault = tmp_path / "vault"
     raw_papers = vault / "raw" / "papers"
@@ -203,6 +208,7 @@ def test_index_pdf_with_command_preserves_windows_command_path(
 
     Returns:
         None
+
     """
     vault = tmp_path / "vault"
     raw_papers = vault / "raw" / "papers"
@@ -246,6 +252,7 @@ def test_read_pageindex_page_returns_page_text(tmp_path: Path) -> None:
 
     Returns:
         None
+
     """
     document_id = "b" * 64
     document_root = tmp_path / document_id
@@ -289,6 +296,7 @@ def test_persist_pageindex_cache_writes_tree_and_manifest(
 
     Returns:
         None
+
     """
     vault = tmp_path / "vault"
     raw_papers = vault / "raw" / "papers"
@@ -327,6 +335,7 @@ def test_persist_pageindex_cache_rejects_invalid_tree_json(
 
     Returns:
         None
+
     """
     vault = tmp_path / "vault"
     raw_papers = vault / "raw" / "papers"
@@ -354,6 +363,7 @@ def test_read_pageindex_cache_rejects_invalid_document_id(
 
     Returns:
         None
+
     """
     with pytest.raises(ValueError, match="document_id"):
         read_pageindex_cache(tmp_path, "../invalid")
@@ -367,6 +377,7 @@ def test_estimate_document_processing(tmp_path: Path) -> None:
 
     Returns:
         None
+
     """
     vault = tmp_path / "vault"
     raw_papers = vault / "raw" / "papers"
@@ -400,6 +411,7 @@ def test_index_pdf_with_command_using_docling(
 
     Returns:
         None
+
     """
     vault = tmp_path / "vault"
     raw_papers = vault / "raw" / "papers"

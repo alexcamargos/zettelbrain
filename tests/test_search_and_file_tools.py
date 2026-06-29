@@ -32,6 +32,7 @@ def test_split_command_preserves_windows_absolute_paths(
 
     Returns:
         None
+
     """
     monkeypatch.setattr("tools_command.os.name", "nt")
 
@@ -55,6 +56,7 @@ def test_split_command_keeps_posix_shell_quoting(
 
     Returns:
         None
+
     """
     monkeypatch.setattr("tools_command.os.name", "posix")
 
@@ -69,6 +71,7 @@ def test_lexical_search_returns_ranked_results(tmp_path: Path) -> None:
 
     Returns:
         None
+
     """
     (tmp_path / "a.md").write_text("credito credito risco", encoding="utf-8")
     (tmp_path / "b.md").write_text("risco operacional", encoding="utf-8")
@@ -92,6 +95,7 @@ def test_hybrid_search_falls_back_to_lexical_when_qmd_is_missing(
 
     Returns:
         None
+
     """
     (tmp_path / "a.md").write_text("credito risco", encoding="utf-8")
     monkeypatch.setattr("tools_search.shutil.which", lambda _command: None)
@@ -110,6 +114,7 @@ def test_retrieval_status_reports_missing_qmd(monkeypatch: pytest.MonkeyPatch) -
 
     Returns:
         None
+
     """
     monkeypatch.setattr("tools_search.shutil.which", lambda _command: None)
 
@@ -129,6 +134,7 @@ def test_qmd_search_parses_stdout(tmp_path: Path, monkeypatch: pytest.MonkeyPatc
 
     Returns:
         None
+
     """
     (tmp_path / "a.md").write_text("conteudo", encoding="utf-8")
     monkeypatch.setattr("tools_search.shutil.which", lambda _command: "qmd")
@@ -159,6 +165,7 @@ def test_qmd_search_preserves_windows_command_path(
 
     Returns:
         None
+
     """
     captured: dict[str, list[str]] = {}
     windows_qmd = r"C:\Users\Nome\.gemini\qmd"
@@ -211,6 +218,7 @@ def test_file_tools_are_limited_to_markdown_inside_root(tmp_path: Path) -> None:
 
     Returns:
         None
+
     """
     nested = tmp_path / "nested"
     nested.mkdir()
@@ -229,6 +237,7 @@ def test_merge_search_results_deduplicates_and_combines_engines() -> None:
 
     Returns:
         None
+
     """
     merged = merge_search_results(
         [
@@ -269,6 +278,7 @@ def test_write_markdown_file_creates_and_edits_safely(tmp_path: Path) -> None:
 
     Returns:
         None
+
     """
     rel_path = "nested/new_note.md"
     written = write_markdown_file(tmp_path, rel_path, "conteudo nota")
@@ -280,4 +290,3 @@ def test_write_markdown_file_creates_and_edits_safely(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="Caminho fora do cofre"):
         write_markdown_file(tmp_path, "../outside.md", "escape")
-

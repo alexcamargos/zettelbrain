@@ -20,6 +20,7 @@ def test_get_repo_root() -> None:
 
     Returns:
         None
+
     """
     root = setup.get_repo_root()
     assert isinstance(root, Path)
@@ -34,6 +35,7 @@ def test_configure_gemini_success(mocker: MockerFixture) -> None:
 
     Returns:
         None
+
     """
     mock_repo_root = Path("/fake/root")
 
@@ -116,6 +118,7 @@ def test_configure_gemini_orphan_cleanup(mocker: MockerFixture) -> None:
 
     Returns:
         None
+
     """
     mock_repo_root = Path("/fake/root")
 
@@ -160,6 +163,7 @@ def test_configure_cursor_success(mocker: MockerFixture) -> None:
 
     Returns:
         None
+
     """
     mock_repo_root = Path("/fake/root")
 
@@ -212,6 +216,7 @@ def test_configure_cursor_missing_gemini_md(mocker: MockerFixture) -> None:
 
     Returns:
         None
+
     """
     mock_repo_root = Path("/fake/root")
 
@@ -243,6 +248,7 @@ def test_main_no_arguments(mocker: MockerFixture) -> None:
 
     Returns:
         None
+
     """
     mocker.patch.object(sys, "argv", ["setup.py"])
     with pytest.raises(SystemExit) as excinfo:
@@ -259,6 +265,7 @@ def test_main_invalid_argument(mocker: MockerFixture) -> None:
 
     Returns:
         None
+
     """
     mocker.patch.object(sys, "argv", ["setup.py", "invalid_provider"])
     with pytest.raises(SystemExit) as excinfo:
@@ -275,6 +282,7 @@ def test_main_gemini_argument(mocker: MockerFixture) -> None:
 
     Returns:
         None
+
     """
     mocker.patch.object(sys, "argv", ["setup.py", "gemini"])
     mock_configure = mocker.patch("setup.configure_gemini", return_value=0)
@@ -318,6 +326,7 @@ def test_main_cursor_argument(mocker: MockerFixture) -> None:
 
     Returns:
         None
+
     """
     mocker.patch.object(sys, "argv", ["setup.py", "cursor"])
     mock_configure = mocker.patch("setup.configure_cursor", return_value=0)
@@ -337,6 +346,7 @@ def test_configure_gemini_os_error(mocker: MockerFixture) -> None:
 
     Returns:
         None
+
     """
     mock_repo_root = Path("/fake/root")
     mocker.patch.object(Path, "mkdir", side_effect=OSError("Permission denied"))
@@ -353,6 +363,7 @@ def test_configure_cursor_os_error(mocker: MockerFixture) -> None:
 
     Returns:
         None
+
     """
     mock_repo_root = Path("/fake/root")
     mocker.patch.object(Path, "mkdir", side_effect=OSError("Permission denied"))
@@ -369,6 +380,7 @@ def test_clean_environment_success(mocker: MockerFixture) -> None:
 
     Returns:
         None
+
     """
     mock_repo_root = Path("/fake/root")
     mocker.patch.object(Path, "exists", return_value=True)
@@ -392,6 +404,7 @@ def test_clean_environment_empty(mocker: MockerFixture) -> None:
 
     Returns:
         None
+
     """
     mock_repo_root = Path("/fake/root")
     mocker.patch.object(Path, "exists", return_value=False)
@@ -413,6 +426,7 @@ def test_clean_environment_os_error(mocker: MockerFixture) -> None:
 
     Returns:
         None
+
     """
     mock_repo_root = Path("/fake/root")
     mocker.patch.object(Path, "exists", return_value=True)
@@ -431,6 +445,7 @@ def test_main_clean_argument(mocker: MockerFixture) -> None:
 
     Returns:
         None
+
     """
     mocker.patch.object(sys, "argv", ["setup.py", "clean"])
     mock_clean = mocker.patch("setup.clean_environment", return_value=0)
@@ -450,6 +465,7 @@ def test_main_uninstall_argument(mocker: MockerFixture) -> None:
 
     Returns:
         None
+
     """
     mocker.patch.object(sys, "argv", ["setup.py", "uninstall"])
     mock_clean = mocker.patch("setup.clean_environment", return_value=0)

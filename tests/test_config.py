@@ -21,6 +21,7 @@ def test_load_settings_from_env_file(tmp_path: Path, monkeypatch: pytest.MonkeyP
 
     Returns:
         None
+
     """
     (tmp_path / "raw" / "articles").mkdir(parents=True)
     (tmp_path / "raw" / "youtube").mkdir(parents=True)
@@ -63,6 +64,7 @@ def test_load_settings_requires_youtube_when_requested(
 
     Returns:
         None
+
     """
     (tmp_path / "raw" / "articles").mkdir(parents=True)
     (tmp_path / "raw" / "youtube").mkdir(parents=True)
