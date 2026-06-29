@@ -1,12 +1,12 @@
-# /ingest-youtube (Ingestão de transcrições do YouTube)
+# /youtube (Ingestão de transcrições do YouTube)
 
 ## Objetivo
-Processar **apenas** arquivos Markdown em `raw/youtube/` gerados pelo ETL de YouTube (`src/ingestion/youtube_etl.py`) com `source_kind: youtube_transcript`. Este fluxo não substitui `/ingest-article`: transcrições de vídeo têm temporalidade, oralidade, risco de erro automático e autoria/publicação próprias, portanto exigem avaliação específica antes de entrar no cofre.
+Processar **apenas** arquivos Markdown em `raw/youtube/` gerados pelo ETL de YouTube (`src/ingestion/youtube_etl.py`) com `source_kind: youtube_transcript`. Este fluxo não substitui `/article`: transcrições de vídeo têm temporalidade, oralidade, risco de erro automático e autoria/publicação próprias, portanto exigem avaliação específica antes de entrar no cofre.
 
 ## Gatilho
-Acionado quando o usuário disser `gemini "Execute a skill /ingest-youtube no arquivo raw/youtube/[nome].md"` ou `/ingest-youtube raw/youtube/[nome].md`.
+Acionado quando o usuário disser `gemini "Execute a skill /youtube no arquivo raw/youtube/[nome].md"` ou `/youtube raw/youtube/[nome].md`.
 
-**Log:** Ao acrescentar entradas em `.state/log.md`, use estritamente o formato definido no `ZETTELBRAIN.md` (seção Convenção do log operacional). No cabeçalho use **`/ingest-youtube`** e liste todos os arquivos tocados ou criados.
+**Log:** Ao acrescentar entradas em `.state/log.md`, use estritamente o formato definido no `ZETTELBRAIN.md` (seção Convenção do log operacional). No cabeçalho use **`/youtube`** e liste todos os arquivos tocados ou criados.
 
 ## Fluxo de Execução (Workflow)
 
@@ -35,10 +35,10 @@ Aplicando as **Regras Globais de Estilo** do `ZETTELBRAIN.md`, sem bullet points
 
 ### Etapa 4: Catalogação e estado
 1. Atualize `zettelbrain/index.md` na seção **Transcrições do YouTube**. Se a seção não existir, crie-a próxima de **Fontes web informais**.
-2. Atualize `.state/log.md` com cabeçalho **`/ingest-youtube`** e lista explícita de todos os caminhos relativos criados, alterados e lidos em profundidade.
+2. Atualize `.state/log.md` com cabeçalho **`/youtube`** e lista explícita de todos os caminhos relativos criados, alterados e lidos em profundidade.
 3. Atualize `.state/hot.md` com o foco da sessão quando a transcrição mudar a direção imediata da pesquisa.
 
 ## Notas de desenho
-* Use `/ingest-article` para blogs, documentação, notícias, wikis e outros textos web não derivados do ETL de YouTube.
-* Use `/ingest-paper` para PDFs e documentos formais densos.
+* Use `/article` para blogs, documentação, notícias, wikis e outros textos web não derivados do ETL de YouTube.
+* Use `/paper` para PDFs e documentos formais densos.
 * Se a transcrição referenciar um paper, norma ou relatório técnico, trate isso como pista para ingestão futura da fonte primária, não como substituto da fonte primária.
