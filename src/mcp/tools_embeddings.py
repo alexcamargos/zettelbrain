@@ -449,6 +449,15 @@ def semantic_search(
 
     index_dimensions = int(index.get("dimensions", dimensions))
     active_provider = str(index.get("provider", provider))
+
+    if provider != active_provider:
+        raise ValueError(
+            f"Incompatibilidade de embeddings detectada: O índice local foi construído utilizando o provedor "
+            f"'{active_provider}', mas a configuração/busca atual solicita '{provider}'. "
+            f"Se você deseja usar '{provider}', certifique-se de que o provedor está online e execute a "
+            f"ferramenta 'index_zettelbrain_embeddings' para reconstruir o índice. Caso contrário, altere "
+            f"a configuração do EMBEDDING_PROVIDER para coincidir com o índice."
+        )
     query_embedding = embed_text(
         query,
         provider=active_provider,
@@ -781,6 +790,11 @@ class EmbedderFactory:
                 model_name=model_name,
             )
         except RuntimeError:
+            from logger import get_logger
+            get_logger().warning(
+                "Falha ao conectar ao Ollama. Usando fallback 'hashing' para os embeddings. "
+                "Espaços vetoriais gerados serão incompatíveis com embeddings semânticos."
+            )
             embedder = HashingEmbedder(
                 model_name=model_name,
                 endpoint=endpoint,
