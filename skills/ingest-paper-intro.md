@@ -38,7 +38,7 @@ Se o usuário aprovar a criação das notas preliminares, gere os arquivos aplic
 - Não utilize emojis.
 
 1. **Nota de Literatura:** Crie o arquivo em `zettelbrain/literature/` com frontmatter do `ZETTELBRAIN.md`, `confidence` adequado, `source_file` sob `raw/papers/`, referência ABNT e análise em prosa da introdução. A nota deve registrar o argumento preliminar da fonte, o problema de pesquisa, os conceitos ou variáveis introduzidos, a promessa metodológica quando aparecer, limitações da leitura parcial e critérios para decidir se a leitura completa se justifica.
-2. **Notas Permanentes:** Crie notas atômicas em `zettelbrain/permanent/` apenas para os conceitos validados. Para cada permanente **nova**, pesquise notas relacionadas por tema e conecte o corpo com wikilinks relevantes. Aplique a **ligação mínima ao grafo** do `ZETTELBRAIN.md` (dois wikilinks no corpo quando existirem candidatos); caso impossível, registre no log.
+2. **Notas Permanentes:** Crie notas atômicas em `zettelbrain/permanent/` apenas para os conceitos validados. No frontmatter, `sources:` deve apontar para a nota de literatura criada usando lista YAML de strings com wikilinks Obsidian, no formato `sources:\n  - "[[nome-exato-da-nota-de-literatura]]"`; não use `sources: [[nome]]`. Para cada permanente **nova**, pesquise notas relacionadas por tema e conecte o corpo com wikilinks relevantes. Aplique a **ligação mínima ao grafo** do `ZETTELBRAIN.md` (dois wikilinks no corpo quando existirem candidatos); caso impossível, registre no log.
 
 ### Etapa 4: Catalogação
 1. Acesse `zettelbrain/index.md` e adicione os links semânticos (textuais) das novas notas em suas respectivas seções.
