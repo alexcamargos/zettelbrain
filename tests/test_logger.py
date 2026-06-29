@@ -24,7 +24,12 @@ def test_log_skill_execution_uses_stdlib_placeholders_when_loguru_is_unavailable
     """Ensures stdlib fallback does not receive Loguru-style `{}` placeholders."""
     fake_logger = _FakeStdlibLogger()
     monkeypatch.setattr(logger_module, "_logger", None)
-    monkeypatch.setattr(logger_module.logging, "getLogger", lambda _name: fake_logger)
+    original_get_logger = logger_module.logging.getLogger
+    def mocked_get_logger(name=None):
+        if name == "zettelbrain":
+            return fake_logger
+        return original_get_logger(name)
+    monkeypatch.setattr(logger_module.logging, "getLogger", mocked_get_logger)
 
     @logger_module.log_skill_execution
     def sample_tool(value: int) -> int:
