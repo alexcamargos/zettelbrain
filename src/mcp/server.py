@@ -43,6 +43,7 @@ from tools_search import SearchResult, hybrid_search, merge_search_results, retr
 from config import load_settings
 from ingestion.article_etl import save_raw_article
 from logger import configure_logging, log_skill_execution
+from zettelbrain_lint import run_lint_logic
 
 settings = load_settings()
 configure_logging(settings.logs_path)
@@ -273,8 +274,6 @@ def lint_zettelbrain() -> dict[str, Any]:
         dict[str, Any]: Linting result structure.
 
     """
-    from zettelbrain_lint import run_lint_logic
-
     return run_lint_logic()
 
 
