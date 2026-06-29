@@ -32,31 +32,31 @@ flowchart TD
 
 ## Skills de ingestao
 
-### `/ingest-paper`
+### `/paper`
 
-- Regras: [../skills/ingest-paper.md](../skills/ingest-paper.md)
+- Regras: [../skills/paper.md](../skills/paper.md)
 - Entrada: PDFs ou documentos formais em `raw/papers/`.
 - Usa `document_id` SHA-256 do binario completo.
 - Pode usar cache PageIndex em `.pageindex/<document_id>/`.
 - Gera nota de literatura e, apos validacao humana, notas permanentes.
 - Ferramentas MCP relacionadas: `resolve_pdf`, `compute_pdf_sha256`, `estimate_pdf_processing`, `index_pdf_cache`, `read_pdf_cache`, `read_pdf_page`.
 
-### `/ingest-paper-intro`
+### `/paper-intro`
 
-- Regras: [../skills/ingest-paper-intro.md](../skills/ingest-paper-intro.md)
+- Regras: [../skills/paper-intro.md](../skills/paper-intro.md)
 - Entrada: documento formal em `raw/papers/`.
 - Objetivo: triagem rapida de resumo e introducao antes de leitura completa.
 
-### `/ingest-article`
+### `/article`
 
-- Regras: [../skills/ingest-article.md](../skills/ingest-article.md)
+- Regras: [../skills/article.md](../skills/article.md)
 - Entrada: Markdown em `raw/articles/`.
 - Trata fontes informais da web com rastreabilidade, URL, data de recuperacao e avaliacao de procedencia.
 - `confidence` e obrigatorio na nota de literatura.
 
-### `/ingest-youtube`
+### `/youtube`
 
-- Regras: [../skills/ingest-youtube.md](../skills/ingest-youtube.md)
+- Regras: [../skills/youtube.md](../skills/youtube.md)
 - Entrada: Markdown em `raw/youtube/` com `source_kind: youtube_transcript`.
 - Trata oralidade, erro de transcricao e necessidade de checagem em fontes primarias.
 - `confidence` e obrigatorio.
@@ -86,7 +86,7 @@ flowchart TD
 
 - Regras: [../skills/research-deep.md](../skills/research-deep.md)
 - Pesquisa lacunas externas e salva relatorios brutos em `raw/articles/`.
-- Os relatorios devem passar por `/ingest-article` antes de entrar no cofre.
+- Os relatorios devem passar por `/article` antes de entrar no cofre.
 
 ## Skills de producao e manutencao
 
