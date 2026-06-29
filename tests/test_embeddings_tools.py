@@ -309,5 +309,44 @@ def test_semantic_search_labels_ollama_index_engine(
         model_name="nomic-embed-text",
         endpoint="http://localhost:11434/api/embeddings",
     )
-
     assert results[0].engine == "ollama-embedding"
+
+
+def test_semantic_search_raises_value_error_on_provider_mismatch(
+    tmp_path: Path,
+) -> None:
+    """Test that semantic_search raises ValueError on mismatch between configured and active index provider.
+
+    Args:
+        tmp_path: Pytest temporary directory fixture.
+
+    Returns:
+        None
+    """
+    zettelbrain = tmp_path / "zettelbrain"
+    zettelbrain.mkdir()
+    _write_note(zettelbrain, "permanent/note.md", "credito")
+    index_path = tmp_path / ".state" / "embeddings_index.json"
+
+    build_embedding_index(
+        zettelbrain,
+        index_path,
+        provider="hashing",
+        dimensions=16,
+        model_name="nomic-embed-text",
+        endpoint=None,
+    )
+
+    with pytest.raises(ValueError, match="Incompatibilidade de embeddings detectada"):
+        semantic_search(
+            zettelbrain,
+            index_path,
+            "credito",
+            limit=1,
+            provider="ollama",
+            dimensions=16,
+            model_name="nomic-embed-text",
+            endpoint="http://localhost:11434/api/embeddings",
+            rebuild_if_missing=False,
+        )
+
