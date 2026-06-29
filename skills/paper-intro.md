@@ -1,12 +1,12 @@
-# /ingest-paper-intro (Triagem da introdução de papers)
+# /paper-intro (Triagem da introdução de papers)
 
 ## Objetivo
-Processar exclusivamente a seção introdutória (incluindo o resumo ou abstract) de documentos formais em **`raw/papers/`**. O foco é mapear a viabilidade teórica do documento e extrair os **conceitos iniciais apresentados pelo autor**, permitindo uma triagem antes da leitura integral. Recortes informais da web em **`raw/articles/`** usam **`/ingest-article`** e transcrições do YouTube geradas pelo ETL ficam em **`raw/youtube/`** e usam **`/ingest-youtube`** (fluxos distintos).
+Processar exclusivamente a seção introdutória (incluindo o resumo ou abstract) de documentos formais em **`raw/papers/`**. O foco é mapear a viabilidade teórica do documento e extrair os **conceitos iniciais apresentados pelo autor**, permitindo uma triagem antes da leitura integral. Recortes informais da web em **`raw/articles/`** usam **`/article`** e transcrições do YouTube geradas pelo ETL ficam em **`raw/youtube/`** e usam **`/youtube`** (fluxos distintos).
 
 ## Gatilho
-Acionado quando o usuário disser `gemini "Execute a skill /ingest-paper-intro no arquivo raw/papers/[nome_do_arquivo]"` ou `/ingest-paper-intro raw/papers/[nome_do_arquivo]`.
+Acionado quando o usuário disser `gemini "Execute a skill /paper-intro no arquivo raw/papers/[nome_do_arquivo]"` ou `/paper-intro raw/papers/[nome_do_arquivo]`.
 
-**Log:** Ao acrescentar entradas em `.state/log.md`, use estritamente o formato definido no `ZETTELBRAIN.md` (seção Convenção do log operacional). No cabeçalho da entrada use o nome da skill **`/ingest-paper-intro`**. Liste todos os arquivos tocados ou criados.
+**Log:** Ao acrescentar entradas em `.state/log.md`, use estritamente o formato definido no `ZETTELBRAIN.md` (seção Convenção do log operacional). No cabeçalho da entrada use o nome da skill **`/paper-intro`**. Liste todos os arquivos tocados ou criados.
 
 ## Fluxo de Execução (Workflow)
 
@@ -42,5 +42,5 @@ Se o usuário aprovar a criação das notas preliminares, gere os arquivos aplic
 
 ### Etapa 4: Catalogação
 1. Acesse `zettelbrain/index.md` e adicione os links semânticos (textuais) das novas notas em suas respectivas seções.
-2. Atualize o `.state/log.md` com cabeçalho **`/ingest-paper-intro`** e **lista explícita** de todos os caminhos relativos criados ou alterados (literatura, permanentes, `index.md`, `hot.md` se tocado).
+2. Atualize o `.state/log.md` com cabeçalho **`/paper-intro`** e **lista explícita** de todos os caminhos relativos criados ou alterados (literatura, permanentes, `index.md`, `hot.md` se tocado).
 3. Atualize o `.state/hot.md` refletindo a nova adição ao foco da pesquisa.
