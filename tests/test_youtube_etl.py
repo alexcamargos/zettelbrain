@@ -12,6 +12,7 @@ from ingestion.youtube_etl import (
     FeedVideo,
     TranscriptSegment,
     YouTubeETLPipeline,
+    _fetch_raw_transcript,
     load_processed_ids,
     parse_youtube_feed,
     render_transcript_markdown,
@@ -115,6 +116,22 @@ def test_youtube_etl_continues_after_individual_transcript_failure() -> None:
     assert writer.processed_ids == {"ok"}
 
 
+def test_fetch_raw_transcript_supports_legacy_class_method_api() -> None:
+    """Test transcript fetching with youtube-transcript-api 0.x style API."""
+    raw_segments = _fetch_raw_transcript(_LegacyTranscriptApi, "abc123", ("pt", "en"))
+
+    assert raw_segments == [{"text": "conteudo", "start": 1.5, "duration": 2.0}]
+    assert _LegacyTranscriptApi.calls == [("abc123", ["pt", "en"])]
+
+
+def test_fetch_raw_transcript_supports_current_instance_api() -> None:
+    """Test transcript fetching with youtube-transcript-api 1.x style API."""
+    raw_segments = _fetch_raw_transcript(_CurrentTranscriptApi, "abc123", ("pt", "en"))
+
+    assert raw_segments == [{"text": "conteudo", "start": 1.5, "duration": 2.0}]
+    assert _CurrentTranscriptApi.instances[0].calls == [("abc123", ["pt", "en"])]
+
+
 class _FakeFeedReader:
     def __init__(self, videos: list[FeedVideo]) -> None:
         self.videos = videos
@@ -155,3 +172,29 @@ class _FakeTranscriptWriter:
 
     def append_processed_id(self, video_id: str) -> None:
         self.processed_ids.add(video_id)
+
+
+class _LegacyTranscriptApi:
+    calls: list[tuple[str, list[str]]] = []
+
+    @classmethod
+    def get_transcript(cls, video_id: str, languages: list[str]) -> list[dict[str, float | str]]:
+        cls.calls.append((video_id, languages))
+        return [{"text": "conteudo", "start": 1.5, "duration": 2.0}]
+
+
+class _CurrentTranscriptApi:
+    instances: list[_CurrentTranscriptApi] = []
+
+    def __init__(self) -> None:
+        self.calls: list[tuple[str, list[str]]] = []
+        self.instances.append(self)
+
+    def fetch(self, video_id: str, languages: list[str]) -> _FetchedTranscript:
+        self.calls.append((video_id, languages))
+        return _FetchedTranscript()
+
+
+class _FetchedTranscript:
+    def to_raw_data(self) -> list[dict[str, float | str]]:
+        return [{"text": "conteudo", "start": 1.5, "duration": 2.0}]
