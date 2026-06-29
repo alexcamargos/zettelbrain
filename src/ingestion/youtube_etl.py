@@ -173,14 +173,14 @@ class TranscriptWriter:
     Also handles tracking processed video IDs.
     """
 
-    def __init__(self, raw_articles_path: Path, history_path: Path) -> None:
+    def __init__(self, raw_youtube_path: Path, history_path: Path) -> None:
         """Initialize the transcript writer.
 
         Args:
-            raw_articles_path: Directory path for storing transcripts.
+            raw_youtube_path: Directory path for storing transcripts.
             history_path: Path to the text file tracking ingested IDs.
         """
-        self.raw_articles_path = raw_articles_path
+        self.raw_youtube_path = raw_youtube_path
         self.history_path = history_path
 
     def load_processed_ids(self) -> set[str]:
@@ -216,7 +216,7 @@ class TranscriptWriter:
         Returns:
             Path: Output markdown file Path.
         """
-        return self.raw_articles_path / f"youtube-{video.video_id}-{slugify(video.title)}.md"
+        return self.raw_youtube_path / f"youtube-{video.video_id}-{slugify(video.title)}.md"
 
     def render_markdown(self, video: FeedVideo, transcript: list[TranscriptSegment]) -> str:
         """Render YouTube video and transcript data into formatted Markdown text.
@@ -265,7 +265,7 @@ class TranscriptWriter:
         Returns:
             Path: The file Path where the transcript was saved.
         """
-        self.raw_articles_path.mkdir(parents=True, exist_ok=True)
+        self.raw_youtube_path.mkdir(parents=True, exist_ok=True)
         output_path = self.get_output_path(video)
         output_path.write_text(
             self.render_markdown(video, transcript),
@@ -434,36 +434,36 @@ def render_transcript_markdown(video: FeedVideo, transcript: list[TranscriptSegm
     return writer.render_markdown(video, transcript)
 
 
-def transcript_output_path(raw_articles_path: Path, video: FeedVideo) -> Path:
+def transcript_output_path(raw_youtube_path: Path, video: FeedVideo) -> Path:
     """Determine the file output path for a video transcript markdown file.
 
     Args:
-        raw_articles_path: Target directory path for storing transcripts.
+        raw_youtube_path: Target directory path for storing transcripts.
         video: The video metadata object.
 
     Returns:
         Path: Output markdown file Path.
     """
-    writer = TranscriptWriter(raw_articles_path, Path())
+    writer = TranscriptWriter(raw_youtube_path, Path())
     return writer.get_output_path(video)
 
 
 def write_transcript_artifact(
-    raw_articles_path: Path,
+    raw_youtube_path: Path,
     video: FeedVideo,
     transcript: list[TranscriptSegment],
 ) -> Path:
     """Write the rendered transcript markdown content to a local file.
 
     Args:
-        raw_articles_path: Target directory path for storing transcripts.
+        raw_youtube_path: Target directory path for storing transcripts.
         video: The video metadata object.
         transcript: The list of transcript segments.
 
     Returns:
         Path: The file Path where the transcript was saved.
     """
-    writer = TranscriptWriter(raw_articles_path, Path())
+    writer = TranscriptWriter(raw_youtube_path, Path())
     return writer.write(video, transcript)
 
 
