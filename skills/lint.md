@@ -12,11 +12,13 @@ Acionado quando o usuário disser `gemini "Execute a skill /lint no diretório z
 
 ### Etapa 1: Varredura de Integridade (Links e Estrutura)
 1. Execute a ferramenta MCP local `lint_zettelbrain` para realizar a auditoria estática e estrutural do cofre de forma determinística e rápida.
-2. Utilize o payload JSON de saída da ferramenta (contendo `errors`, `warnings` e `emergent_patterns`) para fundamentar as análises estruturais de:
+2. Utilize o payload JSON de saída da ferramenta (contendo `errors`, `warnings`, `fixes` e `emergent_patterns`) para fundamentar as análises estruturais de:
    - **Links Mortos** (`errors` do tipo `dead_link`)
    - **Notas Órfãs** (`warnings` do tipo `orphan_note`)
    - **Ligação Mínima ao Grafo** (`warnings` do tipo `minimal_connection`)
    - **Referências a notas deprecadas** (`warnings` do tipo `deprecated_reference`)
+   - **Nomes de notas de literatura fora do padrão** (`warnings` do tipo `literature_filename_pattern`, quando a correção automática não puder ser aplicada)
+   - **Correções automáticas de nomes de notas de literatura** (`fixes` do tipo `literature_filename`)
    - **Padrões Emergentes** (lista em `emergent_patterns`)
 3. **Evite ler todas as notas em profundidade** no contexto apenas para verificar ligações estruturais ou listar negritos, reduzindo drasticamente o consumo de tokens de contexto do LLM.
 
