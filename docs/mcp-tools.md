@@ -25,6 +25,7 @@ uv run zettelbrain-mcp
 | `list_zettelbrain_markdown` | Lista Markdown dentro de `zettelbrain/`. |
 | `get_semantic_bridge` | Encontra par de notas com distancia semantica util. |
 | `read_zettelbrain_markdown` | Le Markdown do cofre com limite de path seguro. |
+| `write_zettelbrain_markdown` | Cria ou edita Markdown dentro de `zettelbrain/` com limite de path seguro. |
 | `lint_zettelbrain` | Executa linter de integridade do cofre. |
 | `inspect_pdf_manifest` | Localiza manifest PageIndex por PDF de origem. |
 | `list_pdf_manifests` | Lista manifests PageIndex existentes. |
@@ -41,7 +42,7 @@ uv run zettelbrain-mcp
 
 - Ferramentas de PDF aceitam apenas arquivos dentro de `raw/papers/`.
 - `document_id` deve ser SHA-256 em minusculas com 64 caracteres.
-- Leitura de Markdown e limitada ao diretorio `zettelbrain/`.
+- Leitura e escrita de Markdown sao limitadas ao diretorio `zettelbrain/`.
 - `index_zettelbrain_embeddings` indexa apenas `zettelbrain/literature/` e `zettelbrain/permanent/`.
 - `EMBEDDING_PROVIDER` aceita `hashing` e `ollama`.
 - `QMD_COMMAND` e opcional; quando ausente ou indisponivel, a busca local usa BM25.
