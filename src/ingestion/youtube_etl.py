@@ -163,7 +163,7 @@ class YouTubeTranscriptFetcher:
         """
         from youtube_transcript_api import YouTubeTranscriptApi
 
-        raw_segments = YouTubeTranscriptApi.get_transcript(video_id, languages=list(self.languages))
+        raw_segments = _fetch_raw_transcript(YouTubeTranscriptApi, video_id, self.languages)
         return [
             TranscriptSegment(
                 text=str(segment.get("text", "")).strip(),
@@ -440,6 +440,35 @@ def fetch_transcript(
     """
     fetcher = YouTubeTranscriptFetcher(languages)
     return fetcher.fetch(video_id)
+
+
+def _fetch_raw_transcript(
+    transcript_api: Any,
+    video_id: str,
+    languages: tuple[str, ...],
+) -> list[dict[str, Any]]:
+    """Fetch transcript segments across youtube-transcript-api 0.x/1.x APIs."""
+    requested_languages = list(languages)
+    if hasattr(transcript_api, "get_transcript"):
+        transcript = transcript_api.get_transcript(video_id, languages=requested_languages)
+    else:
+        transcript = transcript_api().fetch(video_id, languages=requested_languages)
+
+    if hasattr(transcript, "to_raw_data"):
+        return list(transcript.to_raw_data())
+
+    return [_transcript_segment_to_dict(segment) for segment in transcript]
+
+
+def _transcript_segment_to_dict(segment: Any) -> dict[str, Any]:
+    if isinstance(segment, dict):
+        return segment
+
+    return {
+        "text": getattr(segment, "text", ""),
+        "start": getattr(segment, "start", None),
+        "duration": getattr(segment, "duration", None),
+    }
 
 
 def render_transcript_markdown(video: FeedVideo, transcript: list[TranscriptSegment]) -> str:
