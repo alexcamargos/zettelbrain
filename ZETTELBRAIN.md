@@ -34,6 +34,7 @@ Substituir `nome-do-arquivo.pdf` pelo PDF real. Utilizar sempre **`-LiteralPath`
 * **Integridade de Dados:** O frontmatter das notas deve ser sempre um YAML válido entre `---`. Nunca altere ou apague o conteúdo da pasta `raw/`.
 * **Vida útil das notas em `zettelbrain/`:** **Não apague** arquivos do cofre salvo instrução **explícita** do usuário. Para retirar uma nota de circulação, marque-a como deprecada no YAML: `deprecated: true`, opcionalmente `deprecated_at: AAAA-MM-DD`, `deprecated_reason: "..."` e `superseded_by: [[nota-substituta]]` quando existir sucessor. No **corpo**, explique o estado de deprecação já no primeiro parágrafo, sem usar rótulos literais de seção, em conformidade com as regras de estilo.
 * **Ligação ao grafo:** Ao criar **nota permanente nova**, se existirem pelo menos **duas** notas existentes claramente relacionadas, o **corpo** deve incluir **no mínimo dois** wikilinks `[[...]]` a essas notas (além do campo `sources:` no frontmatter). Se o cofre ainda não oferecer candidatos, registre essa limitação no `.state/log.md` nessa operação.
+* **Fontes de notas permanentes:** Em notas permanentes, o campo `sources:` deve apontar para a nota de literatura usada como fonte por meio de uma lista YAML de strings com wikilinks Obsidian, sempre entre aspas. Use `sources:\n  - "[[nome-exato-da-nota-de-literatura]]"`; não use `sources: [[nome]]`, pois YAML interpreta esse valor como lista aninhada e o Obsidian pode deixar de resolver o vínculo.
 * **Protocolo de Reconciliação e Auto-Refatoração:** Antes de criar qualquer nota permanente em `zettelbrain/permanent/`, é mandatório realizar uma busca semântica ou lexical para verificar sobreposição com conceitos já catalogados. Se uma nota existente cobrir o mesmo conceito ou variável de risco, o agente deve refatorar e enriquecer incrementalmente a nota existente em vez de criar uma duplicada, atualizando e agregando as fontes no frontmatter (`sources:` e `abnt_reference`).
 
 ## 3. Regras de Estilo e Qualidade de Escrita (Writing Rules)
@@ -140,7 +141,8 @@ O campo **`confidence`** é **obrigatório** e deve refletir a força da evidên
 type: permanent
 id: YYYYMMDDHHMM
 tags: [tag1, tag2]
-sources: [[link-da-nota-de-literatura]]
+sources:
+  - "[[link-da-nota-de-literatura]]"
 confidence: high
 deprecated: false
 ---
