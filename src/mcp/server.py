@@ -267,8 +267,10 @@ def write_zettelbrain_markdown(relative_path: str, content: str) -> str:
 def lint_zettelbrain() -> dict[str, Any]:
     """Run the static audit and validation linter for ZettelBrain.
 
-    Identifies dead links, orphan notes, minimal graph connections, and
-    emergent patterns from bolded terms.
+    Identifies dead links, orphan notes, minimal graph connections,
+    source-specific literature filename issues, and emergent patterns from
+    bolded terms. The deterministic lint pass also renames fixable literature
+    files and updates wikilinks.
 
     Returns:
         dict[str, Any]: Linting result structure.
