@@ -10,11 +10,11 @@ uv run python src/mcp/server.py --health-json
 ```
 
 `uv sync` instala dependencias declaradas em `pyproject.toml` e usa `uv.lock` para reprodutibilidade.
-`uv run install bootstrap` cria os diretorios locais ignorados pelo Git, como `raw/`, `zettelbrain/`, `logs/`, `.state/` e `.pageindex/`.
+`uv run install bootstrap` cria os diretorios locais de trabalho, como `raw/`, `zettelbrain/`, `logs/`, `.state/` e `.pageindex/`. Em `.state/`, os arquivos `hot.md` e `log.md` podem ser versionados como estado operacional inicial; caches e historicos gerados sao ignorados pelo Git.
 
 ## Bootstrap local
 
-Como `raw/`, `zettelbrain/` e `logs/` nao sao rastreados pelo Git, um clone novo nao cria esses diretorios automaticamente. Use:
+Como `raw/`, `zettelbrain/` e `logs/` nao sao rastreados pelo Git, e `.state/` tambem pode precisar de arquivos gerados localmente, um clone novo deve recriar a estrutura de trabalho. Use:
 
 ```powershell
 uv run install bootstrap
@@ -42,6 +42,8 @@ O comando cria, sem adicionar conteudo ao Git:
 - `logs/`
 - `.state/`
 - `.pageindex/`
+
+Arquivos gerados como `.state/historico_ingestao.txt` e `.state/embeddings_index.json` continuam ignorados pelo Git. Os arquivos `.state/hot.md` e `.state/log.md`, quando rastreados, representam o estado operacional versionado do cofre.
 
 ## Variaveis de ambiente
 
