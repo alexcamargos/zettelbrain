@@ -33,6 +33,7 @@ def sha256_file(path: Path) -> str:
 
     Returns:
         str: The 64-character lowercase hexadecimal hash.
+
     """
     digest = hashlib.sha256()
     with path.open("rb") as file:
@@ -51,6 +52,7 @@ def find_pageindex_manifest(pageindex_root: Path, source_path: str) -> dict[str,
     Returns:
         dict[str, Any] | None: The loaded manifest data dictionary, or None if
             no matching manifest exists.
+
     """
     normalized_source = _normalize_relative_path(source_path)
     for manifest_path in pageindex_root.glob("*/manifest.json"):
@@ -80,6 +82,7 @@ def resolve_pdf_cache(
     Returns:
         dict[str, Any]: Resolution status map containing source path, document ID,
             cache presence, and loaded manifest (if available).
+
     """
     pdf_path = _safe_pdf_path(vault_path, raw_papers_path, relative_path)
     document_id = sha256_file(pdf_path)
@@ -120,6 +123,7 @@ def index_pdf_with_command(
     Returns:
         dict[str, Any]: Resolution status map containing source path, document ID,
             cache presence, and loaded manifest (if available).
+
     """
     pdf_path = _safe_pdf_path(vault_path, raw_papers_path, relative_path)
 
@@ -250,6 +254,7 @@ def persist_pageindex_cache(
 
     Returns:
         dict[str, Any]: Information mapping of the written paths and metadata.
+
     """
     pdf_path = _safe_pdf_path(vault_path, raw_papers_path, relative_path)
     document_id = sha256_file(pdf_path)
@@ -302,6 +307,7 @@ def list_pageindex_manifests(pageindex_root: Path) -> list[dict[str, Any]]:
 
     Returns:
         list[dict[str, Any]]: List of metadata maps containing document IDs and source paths.
+
     """
     manifests: list[dict[str, Any]] = []
     for manifest_path in sorted(pageindex_root.glob("*/manifest.json")):
@@ -341,6 +347,7 @@ def read_pageindex_cache(
 
     Raises:
         ValueError: If document_id is not a valid SHA-256 identifier or escapes boundaries.
+
     """
     if not _is_document_id(document_id):
         raise ValueError("document_id must be a lowercase hexadecimal SHA-256 value.")
@@ -379,6 +386,7 @@ def read_pageindex_page(pageindex_root: Path, document_id: str, page: int) -> di
 
     Raises:
         ValueError: If page is less than 1 or if document_id is invalid.
+
     """
     if page < 1:
         raise ValueError("page must be greater than or equal to 1.")
@@ -418,6 +426,7 @@ def _find_tree_matches(value: Any, *, query: str | None, limit: int) -> list[dic
 
     Returns:
         list[dict[str, Any]]: List of dictionary mappings representing matches.
+
     """
     terms = [term.lower() for term in (query or "").split() if len(term) >= 2]
     if not terms:
@@ -451,6 +460,7 @@ def _walk_json(value: Any) -> list[Any]:
 
     Returns:
         Flat list containing the root value and every nested child value.
+
     """
     nodes = [value]
     if isinstance(value, dict):
@@ -472,6 +482,7 @@ def _node_text(node: Any) -> str:
 
     Returns:
         Extracted text, or an empty string when the node has no textual content.
+
     """
     if isinstance(node, str):
         return node
@@ -494,6 +505,7 @@ def _node_page(node: Any) -> int | None:
 
     Returns:
         int | None: Page number if found, otherwise None.
+
     """
     if not isinstance(node, dict):
         return None
@@ -512,6 +524,7 @@ def _is_document_id(value: str) -> bool:
 
     Returns:
         bool: True if it is a valid format, otherwise False.
+
     """
     return len(value) == 64 and all(char in "0123456789abcdef" for char in value)
 
@@ -525,6 +538,7 @@ def _find_page_nodes(value: Any, *, page: int) -> list[Any]:
 
     Returns:
         list[Any]: Matching nodes in the sub-tree.
+
     """
     return [node for node in _walk_json(value) if _node_page(node) == page]
 
@@ -541,6 +555,7 @@ def _read_manifest_for_document_id(
 
     Returns:
         dict[str, Any] | None: Loaded manifest dictionary or None if missing/invalid.
+
     """
     manifest_path = pageindex_root / document_id / "manifest.json"
     if not manifest_path.exists():
@@ -565,6 +580,7 @@ def _safe_pdf_path(vault_path: Path, raw_papers_path: Path, relative_path: str) 
     Raises:
         ValueError: If path escapes raw/papers directory or is not a PDF.
         FileNotFoundError: If the target file does not exist.
+
     """
     resolved_vault = vault_path.resolve()
     resolved_raw_papers = raw_papers_path.resolve()
@@ -586,6 +602,7 @@ def _normalize_relative_path(value: str) -> str:
 
     Returns:
         str: Normalized relative path string.
+
     """
     normalized = value.replace("\\", "/").strip()
     if normalized.startswith("./"):
@@ -604,6 +621,7 @@ def _parse_tree_payload(tree: dict[str, Any] | list[Any] | str) -> dict[str, Any
 
     Raises:
         ValueError: If serialization is not a valid JSON object or list.
+
     """
     if isinstance(tree, dict | list):
         return tree
@@ -624,6 +642,7 @@ def _infer_tree_metadata(tree: dict[str, Any] | list[Any]) -> dict[str, Any]:
 
     Returns:
         dict[str, Any]: Metadata dict containing page count estimate if found.
+
     """
     pages = sorted({page for node in _walk_json(tree) if (page := _node_page(node)) is not None})
     if not pages:
@@ -652,6 +671,7 @@ def estimate_document_processing(
     Raises:
         ValueError: If the path escapes raw/papers directory or is not a PDF.
         FileNotFoundError: If the target file does not exist.
+
     """
     pdf_path = _safe_pdf_path(vault_path, raw_papers_path, relative_path)
     byte_size = pdf_path.stat().st_size

@@ -17,6 +17,7 @@ class ConfigError(RuntimeError):
     Args:
         *args: Variable length argument list passed to RuntimeError.
         **kwargs: Arbitrary keyword arguments passed to RuntimeError.
+
     """
 
 
@@ -41,6 +42,7 @@ class Settings:
         embedding_endpoint: Local embedding endpoint URL, when provider needs one.
         embedding_index_path: Path to the local embedding index JSON file.
         embedding_dimensions: Number of dimensions in the local embedding vector.
+
     """
 
     vault_path: Path
@@ -74,6 +76,7 @@ def load_settings(env_path: Path | str | None = None, *, require_youtube: bool =
     Raises:
         ConfigError: If mandatory directories are missing or if YouTube settings are
             required but missing.
+
     """
     repo_root = Path(__file__).resolve().parents[1]
     dotenv_path = Path(env_path) if env_path else repo_root / ".env"
@@ -120,6 +123,7 @@ def _load_dotenv(dotenv_path: Path) -> None:
 
     Returns:
         None
+
     """
     try:
         from dotenv import load_dotenv
@@ -139,6 +143,7 @@ def _load_dotenv_fallback(dotenv_path: Path) -> None:
 
     Returns:
         None
+
     """
     if not dotenv_path.exists():
         return
@@ -160,6 +165,7 @@ def _resolve_path(value: str, base_path: Path) -> Path:
 
     Returns:
         Path: The resolved absolute Path object.
+
     """
     path = Path(value).expanduser()
     if not path.is_absolute():
@@ -175,6 +181,7 @@ def _empty_to_none(value: str | None) -> str | None:
 
     Returns:
         str | None: The stripped string, or None if it was empty or whitespace-only.
+
     """
     if value is None:
         return None
@@ -193,6 +200,7 @@ def _parse_positive_int(value: str | None) -> int:
 
     Raises:
         ConfigError: If the value is not a valid integer or is less than or equal to zero.
+
     """
     try:
         parsed = int(value or "0")
@@ -216,6 +224,7 @@ def _validate_settings(settings: Settings, *, require_youtube: bool) -> None:
     Raises:
         ConfigError: If any required path does not exist, or if YouTube settings
             are required but not configured.
+
     """
     required_dirs = {
         "OBSIDIAN_VAULT_PATH": settings.vault_path,

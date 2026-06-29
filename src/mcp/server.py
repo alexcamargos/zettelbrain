@@ -54,6 +54,7 @@ def health() -> dict[str, Any]:
 
     Returns:
         dict[str, Any]: Server status mapping with configuration keys and settings.
+
     """
     return {
         "status": "ok",
@@ -81,6 +82,7 @@ def search_zettelbrain(query: str, limit: int = 8) -> list[dict[str, Any]]:
 
     Returns:
         list[dict[str, Any]]: List of dictionary mappings representing search results.
+
     """
     primary_results = hybrid_search(
         settings.zettelkasten_path,
@@ -123,6 +125,7 @@ def retrieval_health() -> dict[str, Any]:
 
     Returns:
         dict[str, Any]: Dictionary representing the current retrieval status.
+
     """
     return retrieval_status(settings.qmd_command).__dict__
 
@@ -133,6 +136,7 @@ def embedding_health() -> dict[str, Any]:
 
     Returns:
         dict[str, Any]: Dictionary representing the local embedding status.
+
     """
     return embedding_status(
         settings.embedding_index_path,
@@ -149,6 +153,7 @@ def index_zettelbrain_embeddings() -> dict[str, Any]:
 
     Returns:
         dict[str, Any]: Summary details of the generated embedding index.
+
     """
     index = build_embedding_index(
         settings.zettelkasten_path,
@@ -178,6 +183,7 @@ def semantic_search_zettelbrain(query: str, limit: int = 8) -> list[dict[str, An
 
     Returns:
         list[dict[str, Any]]: List of dictionary mappings representing matching search results.
+
     """
     return [
         result.__dict__
@@ -200,6 +206,7 @@ def list_zettelbrain_markdown() -> list[str]:
 
     Returns:
         list[str]: Relative path strings of markdown files.
+
     """
     return list_markdown_files(settings.zettelkasten_path)
 
@@ -217,6 +224,7 @@ def get_semantic_bridge(
 
     Returns:
         dict[str, Any]: Details of the two bridge notes, similarity score, titles, or status.
+
     """
     return find_semantic_bridge(
         settings.embedding_index_path,
@@ -234,6 +242,7 @@ def read_zettelbrain_markdown(relative_path: str) -> str:
 
     Returns:
         str: UTF-8 decoded text content of the markdown file.
+
     """
     return read_markdown_file(settings.zettelkasten_path, relative_path)
 
@@ -248,9 +257,9 @@ def write_zettelbrain_markdown(relative_path: str, content: str) -> str:
 
     Returns:
         str: Relative path of the written file.
+
     """
     return write_markdown_file(settings.zettelkasten_path, relative_path, content)
-
 
 
 @log_skill_execution
@@ -262,6 +271,7 @@ def lint_zettelbrain() -> dict[str, Any]:
 
     Returns:
         dict[str, Any]: Linting result structure.
+
     """
     from zettelbrain_lint import run_lint_logic
 
@@ -277,6 +287,7 @@ def inspect_pdf_manifest(source_path: str) -> dict[str, Any]:
 
     Returns:
         dict[str, Any]: Manifest details if found, otherwise an empty representation.
+
     """
     manifest = find_pageindex_manifest(settings.vault_path / ".pageindex", source_path)
     return manifest or {"found": False, "source_path": source_path}
@@ -288,6 +299,7 @@ def list_pdf_manifests() -> list[dict[str, Any]]:
 
     Returns:
         list[dict[str, Any]]: List of metadata dictionaries representing cached manifests.
+
     """
     return list_pageindex_manifests(settings.vault_path / ".pageindex")
 
@@ -308,6 +320,7 @@ def read_pdf_cache(
     Returns:
         dict[str, Any]: Dictionary representing the document's manifest, tree
             and search matches.
+
     """
     return read_pageindex_cache(
         settings.vault_path / ".pageindex",
@@ -326,6 +339,7 @@ def resolve_pdf(relative_path: str) -> dict[str, Any]:
 
     Returns:
         dict[str, Any]: Map containing source path, document ID, cache status and manifest.
+
     """
     return resolve_pdf_cache(
         settings.vault_path,
@@ -345,6 +359,7 @@ def read_pdf_page(document_id: str, page: int) -> dict[str, Any]:
 
     Returns:
         dict[str, Any]: Page search status, manifest, text content and node count.
+
     """
     return read_pageindex_page(settings.vault_path / ".pageindex", document_id, page)
 
@@ -359,6 +374,7 @@ def persist_pdf_cache(relative_path: str, tree_json: str) -> dict[str, Any]:
 
     Returns:
         dict[str, Any]: Details of the persisted paths, document ID and manifest.
+
     """
     return persist_pageindex_cache(
         settings.vault_path,
@@ -378,6 +394,7 @@ def index_pdf_cache(relative_path: str) -> dict[str, Any]:
 
     Returns:
         dict[str, Any]: Metadata detailing the persisted cache structure.
+
     """
     return index_pdf_with_command(
         settings.vault_path,
@@ -400,12 +417,11 @@ def compute_pdf_sha256(relative_path: str) -> dict[str, str]:
 
     Raises:
         ValueError: If the file is not a PDF or lies outside raw/papers.
+
     """
     pdf_path = (settings.vault_path / relative_path).resolve()
     if settings.raw_papers_path.resolve() not in pdf_path.parents:
-        raise ValueError(
-            "Only PDFs inside raw/papers can be hashed by this tool."
-        )
+        raise ValueError("Only PDFs inside raw/papers can be hashed by this tool.")
     if pdf_path.suffix.lower() != ".pdf":
         raise ValueError("The provided file is not a PDF.")
     return {"source_path": relative_path, "document_id": sha256_file(pdf_path)}
@@ -420,6 +436,7 @@ def estimate_pdf_processing(relative_path: str) -> dict[str, Any]:
 
     Returns:
         dict[str, Any]: Cost, token, and duration estimation details.
+
     """
     return estimate_document_processing(
         settings.vault_path,
@@ -440,6 +457,7 @@ def ingest_web_article(url: str, filename: str | None = None) -> dict[str, Any]:
     Returns:
         dict[str, Any]: A dictionary representing the outcome of the ingestion,
             containing keys such as 'status', 'output_path', and 'error' if any.
+
     """
     try:
         saved_path = save_raw_article(
@@ -471,6 +489,7 @@ def build_server() -> Any:
 
     Raises:
         RuntimeError: If FastMCP library cannot be imported.
+
     """
     try:
         from mcp.server.fastmcp import FastMCP
@@ -507,6 +526,7 @@ def main() -> None:
 
     Returns:
         None
+
     """
     if "--health-json" in sys.argv:
         print(json.dumps(health(), ensure_ascii=False))

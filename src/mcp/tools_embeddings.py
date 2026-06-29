@@ -257,6 +257,7 @@ class EmbeddingSearchResult:
         score: Cosine similarity score.
         excerpt: Snippet of matching text around the keywords.
         engine: Name of the embedding engine used.
+
     """
 
     path: str
@@ -279,6 +280,7 @@ class EmbeddingStatus:
         document_count: Number of documents indexed.
         dimensions: Vector space dimensionality of the embeddings.
         fallback_provider: Optional fallback embedding provider name.
+
     """
 
     provider: str
@@ -311,6 +313,7 @@ def embedding_status(
 
     Returns:
         EmbeddingStatus: Operational status values mapping.
+
     """
     index = _load_index(index_path)
     index_provider = str(index.get("provider", provider)) if index else provider
@@ -349,6 +352,7 @@ def build_embedding_index(
 
     Returns:
         dict[str, Any]: Payload dictionary stored in the index path.
+
     """
     embedder = _resolve_embedder(
         provider=provider,
@@ -398,6 +402,7 @@ def _iter_indexable_markdown(root: Path) -> Iterator[Path]:
 
     Yields:
         Path: Markdown file Paths inside active conceptual directories.
+
     """
     for directory_name in INDEXABLE_EMBEDDING_DIRS:
         directory = root / directory_name
@@ -433,6 +438,7 @@ def semantic_search(
 
     Returns:
         list[EmbeddingSearchResult]: Sorted list of search results.
+
     """
     index = _load_index(index_path)
     if index is None and rebuild_if_missing:
@@ -452,11 +458,12 @@ def semantic_search(
 
     if provider != active_provider:
         raise ValueError(
-            f"Incompatibilidade de embeddings detectada: O índice local foi construído utilizando o provedor "
-            f"'{active_provider}', mas a configuração/busca atual solicita '{provider}'. "
-            f"Se você deseja usar '{provider}', certifique-se de que o provedor está online e execute a "
-            f"ferramenta 'index_zettelbrain_embeddings' para reconstruir o índice. Caso contrário, altere "
-            f"a configuração do EMBEDDING_PROVIDER para coincidir com o índice."
+            "Incompatibilidade de embeddings detectada: O índice local foi construído utilizando "
+            f"o provedor '{active_provider}', mas a configuração/busca atual solicita "
+            f"'{provider}'. "
+            f"Se você deseja usar '{provider}', certifique-se de que o provedor está online e "
+            "execute a ferramenta 'index_zettelbrain_embeddings' para reconstruir o índice. Caso "
+            "contrário, altere a configuração do EMBEDDING_PROVIDER para coincidir com o índice."
         )
     query_embedding = embed_text(
         query,
@@ -505,6 +512,7 @@ def hashing_embedding(text: str, *, dimensions: int) -> list[float]:
 
     Raises:
         ValueError: If dimensions is less than or equal to zero.
+
     """
     if dimensions <= 0:
         raise ValueError("dimensions deve ser maior que zero.")
@@ -542,6 +550,7 @@ def ollama_embedding(
 
     Raises:
         RuntimeError: If the remote endpoint request fails.
+
     """
     payload = json.dumps({"model": model_name, "prompt": text}).encode("utf-8")
     request = urllib.request.Request(
@@ -585,6 +594,7 @@ def embed_text(
 
     Raises:
         RuntimeError: If provider is ollama and endpoint is missing.
+
     """
     if provider == "ollama":
         if not endpoint:
@@ -602,6 +612,7 @@ def cosine_similarity(left: list[float], right: list[float]) -> float:
 
     Returns:
         float: Dot product of both normalized vectors.
+
     """
     if len(left) != len(right):
         return 0.0
@@ -617,6 +628,7 @@ class Embedder(ABC):
         model_name: Name of the embedding model.
         endpoint: Endpoint URL for API-based embedding providers.
         dimensions: Vector space dimensionality of the embeddings.
+
     """
 
     def __init__(
@@ -636,6 +648,7 @@ class Embedder(ABC):
             model_name: Name of the embedding model.
             endpoint: Endpoint URL for API-based embedding providers.
             dimensions: Vector space dimensionality of the embeddings.
+
         """
         self.active_provider = active_provider
         self.fallback_provider = fallback_provider
@@ -655,6 +668,7 @@ class Embedder(ABC):
 
         Raises:
             RuntimeError: If vector generation fails.
+
         """
         pass
 
@@ -675,6 +689,7 @@ class HashingEmbedder(Embedder):
             model_name: Name of the embedding model.
             endpoint: Endpoint URL for API-based embedding providers (ignored).
             dimensions: Vector space dimensionality of the embeddings.
+
         """
         super().__init__(
             active_provider="hashing",
@@ -692,6 +707,7 @@ class HashingEmbedder(Embedder):
 
         Returns:
             list[float]: The generated and normalized embedding vector.
+
         """
         return hashing_embedding(text, dimensions=self.dimensions)
 
@@ -714,6 +730,7 @@ class OllamaEmbedder(Embedder):
             endpoint: Endpoint URL for Ollama service.
             dimensions: Vector space dimensionality of the embeddings.
             fallback_provider: Optional fallback embedding provider string.
+
         """
         super().__init__(
             active_provider="ollama",
@@ -734,6 +751,7 @@ class OllamaEmbedder(Embedder):
 
         Raises:
             RuntimeError: If request or vector generation fails.
+
         """
         return _normalize(
             ollama_embedding(
@@ -768,6 +786,7 @@ class EmbedderFactory:
 
         Returns:
             Embedder: An initialized Embedder instance.
+
         """
         if provider != "ollama":
             return HashingEmbedder(
@@ -791,6 +810,7 @@ class EmbedderFactory:
             )
         except RuntimeError:
             from logger import get_logger
+
             get_logger().warning(
                 "Falha ao conectar ao Ollama. Usando fallback 'hashing' para os embeddings. "
                 "Espaços vetoriais gerados serão incompatíveis com embeddings semânticos."
@@ -827,6 +847,7 @@ def _resolve_embedder(
 
     Returns:
         Embedder: An initialized Embedder instance.
+
     """
     return EmbedderFactory.get_embedder(
         provider=provider,
@@ -844,6 +865,7 @@ def _normalize(vector: list[float]) -> list[float]:
 
     Returns:
         list[float]: The L2 normalized vector.
+
     """
     norm = math.sqrt(sum(value * value for value in vector))
     if norm == 0:
@@ -859,6 +881,7 @@ def _engine_name(provider: str) -> str:
 
     Returns:
         str: Standard engine tag name.
+
     """
     if provider == "ollama":
         return "ollama-embedding"
@@ -874,6 +897,7 @@ def _load_index(index_path: Path) -> dict[str, Any] | None:
     Returns:
         dict[str, Any] | None: Decoded index map if file exists and is valid JSON,
             otherwise None.
+
     """
     if not index_path.exists():
         return None
@@ -896,6 +920,7 @@ def _excerpt(text: str, query: str, *, radius: int = 180) -> str:
 
     Returns:
         str: Excerpt snippet text.
+
     """
     terms = _tokenize(query)
     lowered = text.lower()
@@ -915,6 +940,7 @@ def _tokenize(text: str) -> list[str]:
 
     Returns:
         list[str]: Normalized token word list.
+
     """
     return [token.lower() for token in re.findall(r"\w+", text) if len(token) >= MIN_TOKEN_LENGTH]
 
@@ -927,6 +953,7 @@ def _tokenize_embedding_text(text: str) -> list[str]:
 
     Returns:
         list[str]: Tokens that should contribute to the deterministic hash vector.
+
     """
     return [token for token in _tokenize(text) if token not in HASHING_STOP_WORDS]
 
@@ -939,6 +966,7 @@ def _extract_title(path: Path) -> str:
 
     Returns:
         str: Extracted title.
+
     """
     if not path.exists():
         return path.name
@@ -977,6 +1005,7 @@ def find_semantic_bridge(
 
     Raises:
         FileNotFoundError: If the index file does not exist.
+
     """
     index = _load_index(index_path)
     if index is None:
@@ -1002,8 +1031,7 @@ def find_semantic_bridge(
         return {
             "status": "no_bridge_found",
             "message": (
-                f"No notes were found in the similarity range "
-                f"[{min_similarity}, {max_similarity}]."
+                f"No notes were found in the similarity range [{min_similarity}, {max_similarity}]."
             ),
         }
 

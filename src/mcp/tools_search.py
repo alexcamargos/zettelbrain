@@ -25,6 +25,7 @@ class SearchResult:
         score: Relevance score integer (higher is more relevant).
         excerpt: Snippet of matching text around the keywords.
         engine: The search engine used (e.g., 'bm25' or 'qmd').
+
     """
 
     path: str
@@ -35,6 +36,8 @@ class SearchResult:
 
 @dataclass(frozen=True)
 class RetrievalStatus:
+    """Describe the availability of the qmd-backed retrieval path."""
+
     qmd_configured: bool
     qmd_available: bool
     qmd_command: str | None
@@ -58,6 +61,7 @@ def hybrid_search(
 
     Returns:
         list[SearchResult]: Ranked list of SearchResult matches.
+
     """
     if qmd_command:
         qmd_results = qmd_search(root, query, limit=limit, qmd_command=qmd_command)
@@ -85,6 +89,7 @@ def merge_search_results(
 
     Returns:
         list[SearchResult]: Merged and sorted list of search results.
+
     """
     merged: dict[str, SearchResult] = {}
     for result in [*primary, *secondary]:
@@ -109,6 +114,7 @@ def retrieval_status(qmd_command: str | None = "qmd") -> RetrievalStatus:
 
     Returns:
         RetrievalStatus: Availability and configuration status of retrieval tools.
+
     """
     if not qmd_command:
         return RetrievalStatus(qmd_configured=False, qmd_available=False, qmd_command=None)
@@ -131,6 +137,7 @@ def lexical_search(root: Path, query: str, *, limit: int = 8) -> list[SearchResu
 
     Returns:
         list[SearchResult]: Ranked list of SearchResult matches.
+
     """
     terms = _tokenize(query)
     if not terms:
@@ -190,6 +197,7 @@ def qmd_search(
 
     Returns:
         list[SearchResult]: Ranked list of SearchResult matches or empty list on error.
+
     """
     command_args = split_command(qmd_command)
     executable = command_args[0]
@@ -231,6 +239,7 @@ def _excerpt(text: str, terms: list[str], *, radius: int = 180) -> str:
 
     Returns:
         str: Cleaned text snippet containing the match context.
+
     """
     lowered = text.lower()
     positions = [lowered.find(term) for term in terms if lowered.find(term) >= 0]
@@ -251,6 +260,7 @@ def _parse_qmd_output(output: str, *, root: Path, limit: int) -> list[SearchResu
 
     Returns:
         list[SearchResult]: List of parsed SearchResult objects.
+
     """
     results: list[SearchResult] = []
     for line_number, raw_line in enumerate(output.splitlines(), start=1):
@@ -287,6 +297,7 @@ def _split_qmd_result_line(line: str) -> tuple[str, str]:
 
     Returns:
         tuple[str, str]: The extracted path text and excerpt text.
+
     """
     match = re.match(
         r"^(?P<path>(?:[A-Za-z]:)?[^:]+?\.md)\s*:\s*(?P<excerpt>.*)$",
@@ -307,6 +318,7 @@ def _tokenize(text: str) -> list[str]:
 
     Returns:
         list[str]: Lowercase word token list of at least 2 characters.
+
     """
     return [term.lower() for term in re.findall(r"\w+", text) if len(term) >= 2]
 
@@ -320,6 +332,7 @@ def _merge_engine_names(left: str, right: str) -> str:
 
     Returns:
         str: Combined engine names joined by a plus sign.
+
     """
     names = []
     for name in [*left.split("+"), *right.split("+")]:
@@ -351,6 +364,7 @@ def _bm25_score(
 
     Returns:
         float: BM25 score.
+
     """
     term_counts = {term: document_terms.count(term) for term in set(query_terms)}
     document_length = len(document_terms)

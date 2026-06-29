@@ -34,6 +34,7 @@ def get_repo_root() -> Path:
 
     Returns:
         Path: The absolute path of the repository root.
+
     """
     return Path(__file__).resolve().parents[1]
 
@@ -87,6 +88,7 @@ def configure_gemini(repo_root: Path) -> int:
 
     Returns:
         int: The exit code (0 for success, 1 for failure).
+
     """
     print("[-] Configuring the Gemini CLI environment...")
 
@@ -114,8 +116,7 @@ def configure_gemini(repo_root: Path) -> int:
             print(f"[+] Configuration file created at: {settings_file.relative_to(repo_root)}")
         else:
             print(
-                "[~] Configuration file already exists at: "
-                f"{settings_file.relative_to(repo_root)}"
+                f"[~] Configuration file already exists at: {settings_file.relative_to(repo_root)}"
             )
 
         # Sync skills from root to .gemini/skills
@@ -180,6 +181,7 @@ def configure_cursor(repo_root: Path) -> int:
 
     Returns:
         int: The exit code (0 for success, 1 for failure).
+
     """
     print("[-] Configuring the Cursor IDE environment...")
 
@@ -264,6 +266,7 @@ def clean_environment(repo_root: Path) -> int:
 
     Returns:
         int: The exit code (0 for success, 1 for failure).
+
     """
     print("[-] Removing tool links and configuration files...")
 
@@ -315,6 +318,7 @@ def main() -> None:
 
     Returns:
         None
+
     """
     repo_root = get_repo_root()
     args = sys.argv[1:]

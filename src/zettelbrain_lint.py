@@ -68,6 +68,7 @@ def slugify(text: str) -> str:
 
     Returns:
         Slugified text.
+
     """
     text = unicodedata.normalize("NFKD", text)
     text = text.encode("ascii", "ignore").decode("ascii")
@@ -87,6 +88,7 @@ def parse_frontmatter_and_body(content: str) -> tuple[dict[str, Any], str]:
 
     Raises:
         yaml.YAMLError: If the front matter block contains invalid YAML.
+
     """
     frontmatter: dict[str, Any] = {}
     body = content
@@ -113,6 +115,7 @@ def _normalize_frontmatter_value(value: Any) -> Any:
 
     Returns:
         A normalized scalar or list value.
+
     """
     if isinstance(value, bool):
         return value
@@ -143,6 +146,7 @@ def _normalize_wikilink_target(value: str) -> str | None:
 
     Returns:
         str | None: The normalized target slug, without alias or brackets.
+
     """
     stripped = value.strip()
     match = re.fullmatch(r"\[\[([^\]|]+)(?:\|[^\]]*)?\]\]", stripped)
@@ -162,6 +166,7 @@ class ZettelLinter:
 
         Args:
             zettelkasten_path: Root path of the zettelbrain/ directory.
+
         """
         self.zettelkasten_path = zettelkasten_path
         self.existing_files: dict[str, Path] = {}
@@ -172,6 +177,7 @@ class ZettelLinter:
 
         Raises:
             OSError: If traversing the vault path fails before per-file parsing starts.
+
         """
         # Map every .md file in ZettelBrain.
         for file in self.zettelkasten_path.rglob("*.md"):
@@ -213,6 +219,7 @@ class ZettelLinter:
 
         Returns:
             Unique linked slugs.
+
         """
         wikilinks = set()
 
@@ -244,6 +251,7 @@ class ZettelLinter:
 
         Returns:
             Unique bold terms.
+
         """
         bold_matches = re.findall(r"\*\*([^*]+)\*\*", body)
         terms = set()
@@ -259,6 +267,7 @@ class ZettelLinter:
 
         Returns:
             Results from the linting process.
+
         """
         result = LintResult(total_notes=len(self.existing_files))
 
@@ -325,9 +334,7 @@ class ZettelLinter:
                 src for src in incoming_links.get(slug, []) if src in self.notes and src != slug
             ]
             if not conceptual_incoming and slug not in {"index", "overview"}:
-                msg = (
-                    f"Orphan note detected: no other conceptual graph note points to [[{slug}]]."
-                )
+                msg = f"Orphan note detected: no other conceptual graph note points to [[{slug}]]."
                 result.warnings.append(
                     LintWarning(
                         type="orphan_note",
@@ -416,6 +423,7 @@ def print_text_report(result: LintResult) -> None:
 
     Args:
         result: Aggregated lint result structure.
+
     """
     print("=" * 60)
     print("ZETTELBRAIN HEALTH AND INTEGRITY REPORT")
@@ -443,9 +451,7 @@ def print_text_report(result: LintResult) -> None:
         print("\n[OK] No pending improvement warnings.")
 
     if result.emergent_patterns:
-        print(
-            "\n[EMERGENT PATTERNS] Permanent note candidates found in 3+ distinct notes:"
-        )
+        print("\n[EMERGENT PATTERNS] Permanent note candidates found in 3+ distinct notes:")
         for pattern in result.emergent_patterns:
             print(f"  - **{pattern}**")
     else:
@@ -460,6 +466,7 @@ def run_lint_logic() -> dict[str, Any]:
 
     Returns:
         Dictionary representation of lint results.
+
     """
     settings = load_settings()
     linter = ZettelLinter(settings.zettelkasten_path)

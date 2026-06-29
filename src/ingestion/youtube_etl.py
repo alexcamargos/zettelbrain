@@ -31,6 +31,7 @@ class FeedVideo:
         title: The title of the video.
         url: The direct watch URL of the video.
         published_at: Optional string representation of the publication timestamp.
+
     """
 
     video_id: str
@@ -47,6 +48,7 @@ class TranscriptSegment:
         text: The transcribed text.
         start: Optional start time of the segment in seconds.
         duration: Optional duration of the segment in seconds.
+
     """
 
     text: str
@@ -62,6 +64,7 @@ class YouTubeFeedReader:
 
         Args:
             playlist_id: The YouTube playlist ID.
+
         """
         self.playlist_id = playlist_id
 
@@ -70,6 +73,7 @@ class YouTubeFeedReader:
 
         Returns:
             str: The formatted feed URL.
+
         """
         return YOUTUBE_FEED_URL.format(playlist_id=self.playlist_id)
 
@@ -78,6 +82,7 @@ class YouTubeFeedReader:
 
         Returns:
             list[FeedVideo]: A list of FeedVideo metadata objects.
+
         """
         import feedparser
 
@@ -108,6 +113,7 @@ class YouTubeFeedReader:
 
         Returns:
             list[FeedVideo]: A list of FeedVideo metadata objects.
+
         """
         root = ElementTree.fromstring(xml_content)
         ns = {
@@ -141,6 +147,7 @@ class YouTubeTranscriptFetcher:
 
         Args:
             languages: Priority tuple of language codes. Defaults to ("pt", "pt-BR", "en").
+
         """
         self.languages = languages
 
@@ -152,6 +159,7 @@ class YouTubeTranscriptFetcher:
 
         Returns:
             list[TranscriptSegment]: List of retrieved transcript segments.
+
         """
         from youtube_transcript_api import YouTubeTranscriptApi
 
@@ -179,6 +187,7 @@ class TranscriptWriter:
         Args:
             raw_youtube_path: Directory path for storing transcripts.
             history_path: Path to the text file tracking ingested IDs.
+
         """
         self.raw_youtube_path = raw_youtube_path
         self.history_path = history_path
@@ -188,6 +197,7 @@ class TranscriptWriter:
 
         Returns:
             set[str]: A set of unique video ID strings.
+
         """
         if not self.history_path.exists():
             return set()
@@ -202,6 +212,7 @@ class TranscriptWriter:
 
         Args:
             video_id: The video ID to record.
+
         """
         self.history_path.parent.mkdir(parents=True, exist_ok=True)
         with self.history_path.open("a", encoding="utf-8", newline="\n") as file:
@@ -215,6 +226,7 @@ class TranscriptWriter:
 
         Returns:
             Path: Output markdown file Path.
+
         """
         return self.raw_youtube_path / f"youtube-{video.video_id}-{slugify(video.title)}.md"
 
@@ -227,6 +239,7 @@ class TranscriptWriter:
 
         Returns:
             str: Formatted Markdown string representing the transcript.
+
         """
         retrieved_at = datetime.now(UTC).isoformat(timespec="seconds")
         lines = [
@@ -264,6 +277,7 @@ class TranscriptWriter:
 
         Returns:
             Path: The file Path where the transcript was saved.
+
         """
         self.raw_youtube_path.mkdir(parents=True, exist_ok=True)
         output_path = self.get_output_path(video)
@@ -290,6 +304,7 @@ class YouTubeETLPipeline:
             feed_reader: The reader responsible for fetching playlist feeds.
             transcript_fetcher: The fetcher responsible for retrieving transcripts.
             writer: The writer responsible for formatting and persisting results.
+
         """
         self.feed_reader = feed_reader
         self.transcript_fetcher = transcript_fetcher
@@ -304,6 +319,7 @@ class YouTubeETLPipeline:
 
         Returns:
             list[Path]: A list of file Paths created during ingestion.
+
         """
         logger = get_logger()
         processed_ids = self.writer.load_processed_ids()
@@ -349,6 +365,7 @@ def playlist_feed_url(playlist_id: str) -> str:
 
     Returns:
         str: The formatted feed URL.
+
     """
     reader = YouTubeFeedReader(playlist_id)
     return reader.get_feed_url()
@@ -362,6 +379,7 @@ def load_processed_ids(history_path: Path) -> set[str]:
 
     Returns:
         set[str]: A set of unique video ID strings.
+
     """
     writer = TranscriptWriter(Path(), history_path)
     return writer.load_processed_ids()
@@ -373,6 +391,7 @@ def append_processed_id(history_path: Path, video_id: str) -> None:
     Args:
         history_path: Path to the text file tracking ingested IDs.
         video_id: The video ID to record.
+
     """
     writer = TranscriptWriter(Path(), history_path)
     writer.append_processed_id(video_id)
@@ -386,6 +405,7 @@ def parse_youtube_feed(xml_content: str) -> list[FeedVideo]:
 
     Returns:
         list[FeedVideo]: A list of FeedVideo metadata objects.
+
     """
     return YouTubeFeedReader.parse_feed_xml(xml_content)
 
@@ -398,6 +418,7 @@ def fetch_feed_videos(playlist_id: str) -> list[FeedVideo]:
 
     Returns:
         list[FeedVideo]: A list of FeedVideo metadata objects from the playlist feed.
+
     """
     reader = YouTubeFeedReader(playlist_id)
     return reader.fetch_videos()
@@ -415,6 +436,7 @@ def fetch_transcript(
 
     Returns:
         list[TranscriptSegment]: List of retrieved transcript segments.
+
     """
     fetcher = YouTubeTranscriptFetcher(languages)
     return fetcher.fetch(video_id)
@@ -429,6 +451,7 @@ def render_transcript_markdown(video: FeedVideo, transcript: list[TranscriptSegm
 
     Returns:
         str: Formatted Markdown string representing the transcript.
+
     """
     writer = TranscriptWriter(Path(), Path())
     return writer.render_markdown(video, transcript)
@@ -443,6 +466,7 @@ def transcript_output_path(raw_youtube_path: Path, video: FeedVideo) -> Path:
 
     Returns:
         Path: Output markdown file Path.
+
     """
     writer = TranscriptWriter(raw_youtube_path, Path())
     return writer.get_output_path(video)
@@ -462,6 +486,7 @@ def write_transcript_artifact(
 
     Returns:
         Path: The file Path where the transcript was saved.
+
     """
     writer = TranscriptWriter(raw_youtube_path, Path())
     return writer.write(video, transcript)
@@ -485,6 +510,7 @@ def ingest_youtube_playlist(
 
     Raises:
         ValueError: If YOUTUBE_PLAYLIST_ID is not configured in settings.
+
     """
     if not settings.youtube_playlist_id:
         raise ValueError("YOUTUBE_PLAYLIST_ID is not configured.")
@@ -504,6 +530,7 @@ def slugify(value: str) -> str:
 
     Returns:
         str: Slugified string containing lowercase letters, numbers and hyphens.
+
     """
     normalized = value.lower()
     normalized = re.sub(r"[^a-z0-9]+", "-", normalized)
@@ -549,6 +576,7 @@ def _format_transcript_lines(transcript: list[TranscriptSegment]) -> list[str]:
 
     Returns:
         list[str]: Formatted timestamped transcript lines.
+
     """
     lines: list[str] = []
     for segment in transcript:
@@ -567,6 +595,7 @@ def _format_seconds(value: float) -> str:
 
     Returns:
         str: Time representation string.
+
     """
     total_seconds = int(value)
     minutes, seconds = divmod(total_seconds, 60)
@@ -584,6 +613,7 @@ def _text(element: ElementTree.Element[str] | None) -> str:
 
     Returns:
         str: Stripted text content, or empty string.
+
     """
     if element is None or element.text is None:
         return ""
@@ -598,6 +628,7 @@ def _video_id_from_url(url: str) -> str | None:
 
     Returns:
         str | None: The extracted 11-character video ID, or None if not matched.
+
     """
     match = re.search(r"[?&]v=([^&]+)", url)
     if match:
@@ -613,6 +644,7 @@ def _float_or_none(value: Any) -> float | None:
 
     Returns:
         float | None: Parsed float value, or None if invalid.
+
     """
     try:
         return float(value)
@@ -628,6 +660,7 @@ def _yaml_escape(value: str) -> str:
 
     Returns:
         str: Escaped string.
+
     """
     return value.replace("\\", "\\\\").replace('"', '\\"')
 

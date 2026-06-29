@@ -31,6 +31,7 @@ def configure_logging(logs_path: Path) -> Any:
 
     Returns:
         Any: A loguru logger instance or a standard logging Logger instance.
+
     """
     logs_path.mkdir(parents=True, exist_ok=True)
     log_file = logs_path / "zettelbrain.log"
@@ -68,6 +69,7 @@ def get_logger() -> Any:
 
     Returns:
         Any: The loguru logger instance if available, or the standard logging fallback.
+
     """
     if _logger is not None:
         return _logger
@@ -82,11 +84,12 @@ def log_skill_execution(func: F) -> F:
 
     Returns:
         F: The decorated callable wrapper.
+
     """
 
     @functools.wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
-        """Wrapper function that performs time measurement and error logging.
+        """Measure elapsed time and log errors for decorated MCP tool handlers.
 
         Args:
             *args: Variable positional arguments for the decorated function.
@@ -97,6 +100,7 @@ def log_skill_execution(func: F) -> F:
 
         Raises:
             Exception: Re-raises any exception caught from the decorated function.
+
         """
         logger = get_logger()
         started = time.perf_counter()

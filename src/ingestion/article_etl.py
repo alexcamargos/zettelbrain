@@ -27,7 +27,7 @@ DEFAULT_FETCH_MAX_ATTEMPTS = 2
 
 
 def fetch_and_clean_article(url: str) -> dict[str, Any] | None:
-    """Downloads a webpage and extracts its main body content and metadata.
+    """Download a webpage and extract its main body content and metadata.
 
     Args:
         url: The absolute HTTP/HTTPS URL of the web article.
@@ -39,6 +39,7 @@ def fetch_and_clean_article(url: str) -> dict[str, Any] | None:
 
     Raises:
         ValueError: If the provided URL is empty or invalid.
+
     """
     if not url.strip():
         raise ValueError("Article URL cannot be empty.")
@@ -99,6 +100,7 @@ def fetch_and_clean_article_with_retry(
 
     Returns:
         Extracted article payload or None after all attempts fail.
+
     """
     attempts = max(1, max_attempts)
     last_error: str | None = None
@@ -142,13 +144,14 @@ def fetch_and_clean_article_with_retry(
 
 
 def slugify(value: str) -> str:
-    """Converts a string to a filesystem-safe slug representation.
+    """Convert a string to a filesystem-safe slug representation.
 
     Args:
         value: Input string to slugify.
 
     Returns:
         A slugified string containing only lowercase letters, numbers, and hyphens.
+
     """
     # Decompose accented characters and strip accent marks.
     normalized = unicodedata.normalize("NFKD", value)
@@ -170,16 +173,21 @@ def save_raw_article(
     access_error_log_path: Path | None = None,
     sleep_func: Any = time.sleep,
 ) -> Path | None:
-    """Fetches web article content and saves it as a Markdown file with YAML metadata.
+    """Fetch web article content and save it as a Markdown file with YAML metadata.
 
     Args:
         url: The absolute HTTP/HTTPS URL of the web article.
         raw_articles_path: Target directory path for storing raw articles.
         filename: Optional output filename (e.g., 'article.md'). If omitted, a
             filename is generated automatically based on the article's title.
+        max_attempts: Maximum number of fetch attempts before giving up.
+        retry_delay_seconds: Delay between fetch attempts after a failure.
+        access_error_log_path: Optional JSONL file for recording permanent failures.
+        sleep_func: Injectable sleep function used mainly in tests.
 
     Returns:
         The Path to the saved Markdown file, or None if extraction fails.
+
     """
     data = fetch_and_clean_article_with_retry(
         url,
@@ -245,6 +253,7 @@ def record_article_access_failure(
         url: Failed article URL.
         attempts: Number of attempts performed.
         error: Final error summary.
+
     """
     access_error_log_path.parent.mkdir(parents=True, exist_ok=True)
     payload = {

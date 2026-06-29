@@ -17,6 +17,7 @@ def list_markdown_files(root: Path) -> list[str]:
 
     Returns:
         list[str]: Sorted list of forward-slash relative path strings.
+
     """
     return sorted(str(path.relative_to(root)).replace("\\", "/") for path in root.rglob("*.md"))
 
@@ -33,6 +34,7 @@ def read_markdown_file(root: Path, relative_path: str) -> str:
 
     Raises:
         ValueError: If the file is not a markdown file (.md).
+
     """
     target = _safe_child(root, relative_path)
     if target.suffix.lower() != ".md":
@@ -53,6 +55,7 @@ def _safe_child(root: Path, relative_path: str) -> Path:
     Raises:
         ValueError: If the path escapes the root directory.
         FileNotFoundError: If the file does not exist or is not a file.
+
     """
     resolved_root = root.resolve()
     target = (resolved_root / relative_path).resolve()
@@ -76,6 +79,7 @@ def write_markdown_file(root: Path, relative_path: str, content: str) -> str:
 
     Raises:
         ValueError: If the file is not a markdown file (.md) or escapes boundaries.
+
     """
     resolved_root = root.resolve()
     target = (resolved_root / relative_path).resolve()
@@ -87,4 +91,3 @@ def write_markdown_file(root: Path, relative_path: str, content: str) -> str:
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(content, encoding="utf-8", newline="\n")
     return str(target.relative_to(resolved_root)).replace("\\", "/")
-
