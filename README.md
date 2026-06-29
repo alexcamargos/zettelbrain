@@ -75,6 +75,7 @@ uv run install clean
 | Iniciar servidor MCP | `uv run zettelbrain-mcp` ou `uv run zb-mcp` |
 | Rodar linter do cofre | `uv run zettelbrain-lint` ou `uv run zb-lint` |
 | Gerar JSON do linter | `uv run zettelbrain-lint --json` |
+| Auditar sem corrigir nomes de notas | `uv run zettelbrain-lint --no-fix` |
 | Baixar artigo web para `raw/articles/` | `uv run zb-article-etl --url "<URL>"` |
 | Ingerir transcricoes novas de playlist YouTube | `uv run zb-youtube-etl --limit 5` |
 | Ver candidatos YouTube sem escrever arquivos | `uv run zb-youtube-etl --dry-run` |
