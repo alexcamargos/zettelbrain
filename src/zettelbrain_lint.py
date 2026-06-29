@@ -169,6 +169,25 @@ def _normalize_wikilink_target(value: str) -> str | None:
     return target or None
 
 
+def _format_source_wikilink(value: str) -> str | None:
+    """Format a source value as an Obsidian wikilink literal."""
+    target = _normalize_wikilink_target(value)
+    if not target:
+        return None
+    if value.strip().startswith("[[") and value.strip().endswith("]]"):
+        return value.strip()
+    return f"[[{target}]]"
+
+
+def _render_sources_yaml(sources: list[str]) -> str:
+    """Render sources in the Obsidian-safe YAML format."""
+    rendered_lines = ["sources:"]
+    for source in sources:
+        escaped = source.replace("\\", "\\\\").replace('"', '\\"')
+        rendered_lines.append(f'  - "{escaped}"')
+    return "\n".join(rendered_lines)
+
+
 def expected_literature_filename(frontmatter: dict[str, Any]) -> str | None:
     """Return the expected filename for source-specific literature notes.
 
@@ -251,6 +270,7 @@ class ZettelLinter:
                         "relative_path": str(file.relative_to(self.zettelkasten_path)),
                         "type": "literature" if in_literature else "permanent",
                         "frontmatter": frontmatter,
+                        "raw_content": content,
                         "body": body,
                         "wikilinks": self._extract_wikilinks(body, frontmatter),
                         "bold_terms": self._extract_bold_terms(body),
@@ -261,6 +281,7 @@ class ZettelLinter:
                         "path": file,
                         "relative_path": str(file.relative_to(self.zettelkasten_path)),
                         "type": "literature" if in_literature else "permanent",
+                        "raw_content": content,
                         "error": str(exc),
                     }
 
@@ -315,6 +336,81 @@ class ZettelLinter:
             )
 
         return fixes
+
+    def apply_sources_format_fixes(self) -> list[LintFix]:
+        """Rewrite permanent-note sources into Obsidian-safe YAML strings.
+
+        Obsidian resolves wikilinks inside YAML only when they remain literal
+        strings. Unquoted `sources: [[nota]]` is valid YAML, but parsers treat it
+        as nested lists, which prevents Obsidian from seeing the wikilink.
+        """
+        fixes: list[LintFix] = []
+
+        for slug, info in sorted(self.notes.items()):
+            if info.get("type") != "permanent" or "error" in info:
+                continue
+
+            sources = self._canonical_source_wikilinks(info["frontmatter"])
+            if not sources:
+                continue
+
+            raw_content = str(info.get("raw_content", ""))
+            updated = self._rewrite_sources_block(raw_content, sources)
+            if not updated or updated == raw_content:
+                continue
+
+            info["path"].write_text(updated, encoding="utf-8")
+            fixes.append(
+                LintFix(
+                    type="permanent_sources_format",
+                    file_path=info["relative_path"],
+                    message=(
+                        f"Normalized sources in permanent note [[{slug}]] "
+                        "to quoted Obsidian wikilinks."
+                    ),
+                    details={"sources": sources},
+                )
+            )
+
+        return fixes
+
+    def _canonical_source_wikilinks(self, frontmatter: dict[str, Any]) -> list[str]:
+        sources = frontmatter.get("sources", [])
+        raw_sources = sources if isinstance(sources, list) else [sources]
+
+        canonical: list[str] = []
+        for source in raw_sources:
+            if not isinstance(source, str):
+                continue
+            wikilink = _format_source_wikilink(source)
+            if wikilink and wikilink not in canonical:
+                canonical.append(wikilink)
+
+        return canonical
+
+    def _rewrite_sources_block(self, content: str, sources: list[str]) -> str | None:
+        frontmatter_match = FRONTMATTER_PATTERN.match(content)
+        if not frontmatter_match:
+            return None
+
+        yaml_start, yaml_end = frontmatter_match.span(1)
+        yaml_text = frontmatter_match.group(1)
+        rendered_sources = _render_sources_yaml(sources)
+        sources_pattern = re.compile(r"(?ms)^sources:[^\n]*(?:\n(?:[ \t]+.*|\s*$))*")
+        updated_yaml, replacements = sources_pattern.subn(rendered_sources, yaml_text, count=1)
+        if replacements != 1:
+            return None
+
+        return content[:yaml_start] + updated_yaml + content[yaml_end:]
+
+    def _sources_are_obsidian_safe(self, info: dict[str, Any]) -> bool:
+        sources = self._canonical_source_wikilinks(info["frontmatter"])
+        if not sources:
+            return True
+
+        raw_content = str(info.get("raw_content", ""))
+        rewritten = self._rewrite_sources_block(raw_content, sources)
+        return rewritten == raw_content
 
     def _rewrite_wikilink_references(self, old_slug: str, new_slug: str) -> int:
         """Rewrite wikilinks pointing at a renamed note.
@@ -499,6 +595,18 @@ class ZettelLinter:
 
             # 3. Minimal graph connection for active permanent notes.
             if info["type"] == "permanent" and not is_deprecated:
+                if not self._sources_are_obsidian_safe(info):
+                    result.warnings.append(
+                        LintWarning(
+                            type="permanent_sources_format",
+                            file_path=info["relative_path"],
+                            message=(
+                                "Permanent note sources should be a YAML list of quoted "
+                                'wikilink strings, e.g. sources: ["[[nota-literatura]]"].'
+                            ),
+                        )
+                    )
+
                 # Only count wikilinks detected in the body, excluding front matter.
                 body_links = re.findall(r"\[\[([^\]|]+)(?:\|[^\]]*)?\]\]", info["body"])
                 body_links_unique = {link.strip() for link in body_links}
@@ -622,12 +730,15 @@ def print_text_report(result: LintResult) -> None:
     print("=" * 60)
 
 
-def run_linter(zettelkasten_path: Path, *, fix_filenames: bool = True) -> LintResult:
-    """Run the linter, optionally applying deterministic filename fixes first.
+def run_linter(
+    zettelkasten_path: Path, *, fix_filenames: bool = True, fix_sources: bool = True
+) -> LintResult:
+    """Run the linter, optionally applying deterministic fixes first.
 
     Args:
         zettelkasten_path: Root path of the zettelbrain/ directory.
         fix_filenames: Whether to rename source-specific literature notes.
+        fix_sources: Whether to normalize permanent-note sources for Obsidian.
 
     Returns:
         Aggregated lint results, including fixes applied before validation.
@@ -635,10 +746,16 @@ def run_linter(zettelkasten_path: Path, *, fix_filenames: bool = True) -> LintRe
     """
     linter = ZettelLinter(zettelkasten_path)
     linter.scan_vault()
-    fixes = linter.apply_literature_filename_fixes() if fix_filenames else []
+    fixes = []
 
-    if fixes:
+    if fix_filenames:
+        fixes.extend(linter.apply_literature_filename_fixes())
         linter.scan_vault()
+    if fix_sources:
+        sources_fixes = linter.apply_sources_format_fixes()
+        fixes.extend(sources_fixes)
+        if sources_fixes:
+            linter.scan_vault()
 
     result = linter.run()
     result.fixes.extend(fixes)
@@ -689,13 +806,17 @@ def main() -> None:
     parser.add_argument(
         "--no-fix",
         action="store_true",
-        help="Report literature filename convention issues without renaming files.",
+        help="Report deterministic fixable issues without rewriting files.",
     )
     args = parser.parse_args()
 
     try:
         settings = load_settings()
-        result = run_linter(settings.zettelkasten_path, fix_filenames=not args.no_fix)
+        result = run_linter(
+            settings.zettelkasten_path,
+            fix_filenames=not args.no_fix,
+            fix_sources=not args.no_fix,
+        )
 
         if args.json:
             print(json.dumps(lint_result_to_dict(result), ensure_ascii=False, indent=2))
