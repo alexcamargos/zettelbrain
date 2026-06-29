@@ -122,7 +122,7 @@ uv run install clean
 
 ## Estado dos artefatos locais
 
-Arquivos gerados localmente, caches, logs, `.env`, ambientes virtuais, fontes brutas em `raw/` e notas de trabalho em `zettelbrain/` sao ignorados pelo Git. Em clones novos, rode `uv run install bootstrap` para criar essa estrutura local.
+Arquivos gerados localmente, caches, logs, `.env`, ambientes virtuais, fontes brutas em `raw/` e notas de trabalho em `zettelbrain/` sao ignorados pelo Git. Em `.state/`, caches e historicos gerados sao ignorados, enquanto `hot.md` e `log.md` podem ser rastreados como estado operacional inicial. Em clones novos, rode `uv run install bootstrap` para criar a estrutura local.
 
 ## Licenca
 
