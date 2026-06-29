@@ -26,7 +26,7 @@ from tools_embeddings import (
     find_semantic_bridge,
     semantic_search,
 )
-from tools_file import list_markdown_files, read_markdown_file
+from tools_file import list_markdown_files, read_markdown_file, write_markdown_file
 from tools_pdf import (
     estimate_document_processing,
     find_pageindex_manifest,
@@ -236,6 +236,21 @@ def read_zettelbrain_markdown(relative_path: str) -> str:
         str: UTF-8 decoded text content of the markdown file.
     """
     return read_markdown_file(settings.zettelkasten_path, relative_path)
+
+
+@log_skill_execution
+def write_zettelbrain_markdown(relative_path: str, content: str) -> str:
+    """Write the UTF-8 content to a markdown file in the ZettelBrain safely.
+
+    Args:
+        relative_path: Relative path of the markdown file to write.
+        content: The text content to write.
+
+    Returns:
+        str: Relative path of the written file.
+    """
+    return write_markdown_file(settings.zettelkasten_path, relative_path, content)
+
 
 
 @log_skill_execution
@@ -472,6 +487,7 @@ def build_server() -> Any:
     server.tool()(list_zettelbrain_markdown)
     server.tool()(get_semantic_bridge)
     server.tool()(read_zettelbrain_markdown)
+    server.tool()(write_zettelbrain_markdown)
     server.tool()(lint_zettelbrain)
     server.tool()(inspect_pdf_manifest)
     server.tool()(list_pdf_manifests)
