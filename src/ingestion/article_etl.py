@@ -227,7 +227,7 @@ def save_raw_article(
         f"# {data['title']}",
         "",
         "Content automatically extracted from the web. This file must be processed "
-        "by the `/ingest-article` workflow before entering the ZettelBrain vault.",
+        "by the `/article` workflow before entering the ZettelBrain vault.",
         "",
         data["content"],
     ]
