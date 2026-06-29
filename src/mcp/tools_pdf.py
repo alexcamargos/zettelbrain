@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import shutil
 import subprocess
 from datetime import UTC, datetime
@@ -706,8 +707,6 @@ def estimate_document_processing(
                 if count > 0:
                     page_count = count
                 else:
-                    import re
-
                     matches = re.findall(rb"/Count\s+(\d+)", content)
                     if matches:
                         page_count = max(int(m) for m in matches)
