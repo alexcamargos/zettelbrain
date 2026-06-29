@@ -11,7 +11,7 @@ from types import SimpleNamespace
 
 import pytest
 from tools_command import split_command
-from tools_file import list_markdown_files, read_markdown_file
+from tools_file import list_markdown_files, read_markdown_file, write_markdown_file
 from tools_search import (
     SearchResult,
     hybrid_search,
@@ -259,3 +259,25 @@ def test_merge_search_results_deduplicates_and_combines_engines() -> None:
     assert [result.path for result in merged] == ["a.md", "b.md"]
     assert merged[0].score == 2.0
     assert merged[0].engine == "bm25+hash-embedding"
+
+
+def test_write_markdown_file_creates_and_edits_safely(tmp_path: Path) -> None:
+    """Test that writing markdown files is constrained to root and suffix constraints.
+
+    Args:
+        tmp_path: Pytest temporary directory fixture.
+
+    Returns:
+        None
+    """
+    rel_path = "nested/new_note.md"
+    written = write_markdown_file(tmp_path, rel_path, "conteudo nota")
+    assert written == "nested/new_note.md"
+    assert (tmp_path / "nested" / "new_note.md").read_text(encoding="utf-8") == "conteudo nota"
+
+    with pytest.raises(ValueError, match="Apenas arquivos Markdown"):
+        write_markdown_file(tmp_path, "nested/new_note.txt", "conteudo")
+
+    with pytest.raises(ValueError, match="Caminho fora do cofre"):
+        write_markdown_file(tmp_path, "../outside.md", "escape")
+
