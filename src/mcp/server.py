@@ -25,6 +25,7 @@ from tools_embeddings import (
     embedding_status,
     find_semantic_bridge,
     semantic_search,
+    suggest_note_links,
 )
 from tools_file import list_markdown_files, read_markdown_file, write_markdown_file
 from tools_pdf import (
@@ -192,6 +193,33 @@ def semantic_search_zettelbrain(query: str, limit: int = 8) -> list[dict[str, An
             settings.zettelkasten_path,
             settings.embedding_index_path,
             query,
+            limit=limit,
+            provider=settings.embedding_provider,
+            dimensions=settings.embedding_dimensions,
+            model_name=settings.embedding_model_name,
+            endpoint=settings.embedding_endpoint,
+        )
+    ]
+
+
+@log_skill_execution
+def suggest_zettelbrain_links(relative_path: str, limit: int = 5) -> list[dict[str, Any]]:
+    """Suggest semantic links for a specific note, excluding existing links.
+
+    Args:
+        relative_path: The relative path of the target note.
+        limit: The maximum number of search results. Defaults to 5.
+
+    Returns:
+        list[dict[str, Any]]: List of dictionary mappings representing unlinked similar notes.
+
+    """
+    return [
+        result.__dict__
+        for result in suggest_note_links(
+            settings.zettelkasten_path,
+            settings.embedding_index_path,
+            relative_path,
             limit=limit,
             provider=settings.embedding_provider,
             dimensions=settings.embedding_dimensions,
@@ -504,6 +532,7 @@ def build_server() -> Any:
     server.tool()(embedding_health)
     server.tool()(index_zettelbrain_embeddings)
     server.tool()(semantic_search_zettelbrain)
+    server.tool()(suggest_zettelbrain_links)
     server.tool()(list_zettelbrain_markdown)
     server.tool()(get_semantic_bridge)
     server.tool()(read_zettelbrain_markdown)
