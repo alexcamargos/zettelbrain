@@ -246,6 +246,7 @@ class ZettelLinter:
             in_permanent = "permanent" in file.parts
 
             if in_literature or in_permanent:
+                content = ""
                 try:
                     content = file.read_text(encoding="utf-8")
                     frontmatter, body = parse_frontmatter_and_body(content)
@@ -259,7 +260,7 @@ class ZettelLinter:
                         "wikilinks": self._extract_wikilinks(body, frontmatter),
                         "bold_terms": self._extract_bold_terms(body),
                     }
-                except Exception as exc:
+                except (OSError, UnicodeDecodeError, yaml.YAMLError) as exc:
                     # Keep scanning even when a single note cannot be read or parsed.
                     self.notes[slug] = {
                         "path": file,
@@ -812,7 +813,7 @@ def main() -> None:
             sys.exit(1)
         sys.exit(0)
 
-    except Exception as exc:
+    except (OSError, ValueError) as exc:
         if args.json:
             print(json.dumps({"error": str(exc)}, ensure_ascii=False))
         else:
