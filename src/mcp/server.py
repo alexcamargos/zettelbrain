@@ -21,6 +21,7 @@ if str(MCP_TOOLS_ROOT) not in sys.path:
     sys.path.insert(0, str(MCP_TOOLS_ROOT))
 
 import anyio
+from mcp.server.fastmcp import FastMCP
 from tools_embeddings import (
     build_embedding_index,
     embedding_status,
@@ -575,21 +576,13 @@ async def ingest_web_article(url: str, filename: str | None = None) -> dict[str,
     return await anyio.to_thread.run_sync(_do_ingest)
 
 
-def build_server() -> Any:
+def build_server() -> FastMCP:
     """Build and configure the FastMCP server instance.
 
     Returns:
-        Any: Configured FastMCP server instance.
-
-    Raises:
-        RuntimeError: If FastMCP library cannot be imported.
+        FastMCP: Configured FastMCP server instance.
 
     """
-    try:
-        from mcp.server.fastmcp import FastMCP
-    except ImportError as exc:  # pragma: no cover - depends on runtime dependency
-        raise RuntimeError("Instale as dependencias com `uv sync` antes de iniciar o MCP.") from exc
-
     server = FastMCP("ZettelBrain")
     server.tool()(health)
     server.tool()(search_zettelbrain)
