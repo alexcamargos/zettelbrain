@@ -164,7 +164,7 @@ def index_pdf_with_command(
                 mcp_transport="docling",
             )
             return {"indexed": True, **persisted}
-        except Exception as exc:
+        except (RuntimeError, ValueError, OSError) as exc:
             return {
                 "indexed": False,
                 "reason": f"Erro na extracao via Docling: {exc}",
@@ -695,7 +695,7 @@ def estimate_document_processing(
                 tree_data = json.loads(tree_path.read_text(encoding="utf-8"))
                 for node in _walk_json(tree_data):
                     actual_chars += len(_node_text(node))
-        except Exception:
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError, TypeError, KeyError):
             pass
 
     # 2. Page count estimation helper if cache not found
@@ -710,7 +710,7 @@ def estimate_document_processing(
                     matches = re.findall(rb"/Count\s+(\d+)", content)
                     if matches:
                         page_count = max(int(m) for m in matches)
-        except Exception:
+        except OSError:
             pass
 
     if page_count == 0:
