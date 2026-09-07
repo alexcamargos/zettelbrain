@@ -9,10 +9,8 @@ from __future__ import annotations
 
 import argparse
 import json
-import re
 import sys
 import time
-import unicodedata
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -21,6 +19,7 @@ import trafilatura
 
 from config import load_settings
 from logger import configure_logging, get_logger
+from utils import slugify
 
 DEFAULT_FETCH_RETRY_DELAY_SECONDS = 30
 DEFAULT_FETCH_MAX_ATTEMPTS = 2
@@ -143,25 +142,6 @@ def fetch_and_clean_article_with_retry(
     return None
 
 
-def slugify(value: str) -> str:
-    """Convert a string to a filesystem-safe slug representation.
-
-    Args:
-        value: Input string to slugify.
-
-    Returns:
-        A slugified string containing only lowercase letters, numbers, and hyphens.
-
-    """
-    # Decompose accented characters and strip accent marks.
-    normalized = unicodedata.normalize("NFKD", value)
-    ascii_encoded = normalized.encode("ascii", "ignore").decode("ascii")
-
-    slug = ascii_encoded.lower()
-    slug = re.sub(r"[^a-z0-9]+", "-", slug)
-    slug = re.sub(r"-{2,}", "-", slug).strip("-")
-    return slug[:80] or "article"
-
 
 def save_raw_article(
     url: str,
@@ -202,7 +182,7 @@ def save_raw_article(
     raw_articles_path.mkdir(parents=True, exist_ok=True)
 
     if not filename:
-        slug = slugify(data["title"])
+        slug = slugify(data["title"], default="article")
         filename = f"web-{slug}.md"
     elif not filename.endswith(".md"):
         filename = f"{filename}.md"

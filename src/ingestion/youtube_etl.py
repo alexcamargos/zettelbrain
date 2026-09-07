@@ -18,6 +18,7 @@ from xml.etree import ElementTree
 
 from config import Settings, load_settings
 from logger import configure_logging, get_logger
+from utils import slugify
 
 YOUTUBE_FEED_URL = "https://www.youtube.com/feeds/videos.xml?playlist_id={playlist_id}"
 
@@ -228,7 +229,8 @@ class TranscriptWriter:
             Path: Output markdown file Path.
 
         """
-        return self.raw_youtube_path / f"youtube-{video.video_id}-{slugify(video.title)}.md"
+        slug = slugify(video.title, default="video")
+        return self.raw_youtube_path / f"youtube-{video.video_id}-{slug}.md"
 
     def render_markdown(self, video: FeedVideo, transcript: list[TranscriptSegment]) -> str:
         """Render YouTube video and transcript data into formatted Markdown text.
@@ -550,21 +552,6 @@ def ingest_youtube_playlist(
     pipeline = YouTubeETLPipeline(reader, fetcher, writer)
     return pipeline.run(dry_run=dry_run, limit=limit)
 
-
-def slugify(value: str) -> str:
-    """Slugify a string for filesystem compatibility.
-
-    Args:
-        value: Input string to slugify.
-
-    Returns:
-        str: Slugified string containing lowercase letters, numbers and hyphens.
-
-    """
-    normalized = value.lower()
-    normalized = re.sub(r"[^a-z0-9]+", "-", normalized)
-    normalized = re.sub(r"-{2,}", "-", normalized).strip("-")
-    return normalized[:80] or "video"
 
 
 def main() -> None:

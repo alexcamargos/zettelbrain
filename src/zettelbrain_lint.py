@@ -14,7 +14,6 @@ import argparse
 import json
 import re
 import sys
-import unicodedata
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
@@ -23,6 +22,7 @@ import yaml
 
 from config import load_settings
 from logger import log_skill_execution
+from utils import slugify
 
 FRONTMATTER_PATTERN = re.compile(r"\A---[ \t]*\r?\n(.*?)\r?\n---[ \t]*(?:\r?\n|$)", re.DOTALL)
 
@@ -70,22 +70,6 @@ class LintResult:
     permanent_count: int = 0
     other_count: int = 0
 
-
-def slugify(text: str) -> str:
-    """Convert text into a filename-friendly slug.
-
-    Args:
-        text: Input text.
-
-    Returns:
-        Slugified text.
-
-    """
-    text = unicodedata.normalize("NFKD", text)
-    text = text.encode("ascii", "ignore").decode("ascii")
-    text = text.lower()
-    text = re.sub(r"[^a-z0-9]+", "-", text)
-    return text.strip("-")
 
 
 def parse_frontmatter_and_body(content: str) -> tuple[dict[str, Any], str]:
