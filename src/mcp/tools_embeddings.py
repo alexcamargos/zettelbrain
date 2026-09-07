@@ -502,6 +502,120 @@ def semantic_search(
     return sorted(results, key=lambda result: (-result.score, result.path))[:limit]
 
 
+def suggest_note_links(
+    root: Path,
+    index_path: Path,
+    relative_path: str,
+    *,
+    limit: int,
+    provider: str,
+    dimensions: int,
+    model_name: str,
+    endpoint: str | None,
+    rebuild_if_missing: bool = True,
+) -> list[EmbeddingSearchResult]:
+    """Suggest semantic links for a specific note, excluding existing links.
+
+    Args:
+        root: Root folder Path containing the ZettelBrain files.
+        index_path: Absolute path to the index JSON.
+        relative_path: Relative path of the target note.
+        limit: Maximum results to return.
+        provider: Configured embedding provider name.
+        dimensions: Target dimensions size.
+        model_name: Name of the default embedding model.
+        endpoint: Endpoint URL for API-based providers.
+        rebuild_if_missing: Automatically build index if file does not exist.
+
+    Returns:
+        list[EmbeddingSearchResult]: Sorted list of search results not currently linked.
+
+    Raises:
+        FileNotFoundError: If the target file does not exist.
+        ValueError: If there's an embedding provider mismatch.
+
+    """
+    target_path = (root / relative_path).resolve()
+    if not target_path.exists() or not target_path.is_file():
+        raise FileNotFoundError(f"File not found: {relative_path}")
+
+    content = target_path.read_text(encoding="utf-8", errors="ignore")
+
+    excluded_slugs = {target_path.stem.lower()}
+    for match in re.findall(r"\[\[([^\]|]+)(?:\|[^\]]*)?\]\]", content):
+        excluded_slugs.add(match.strip().lower())
+
+    index = _load_index(index_path)
+    if index is None and rebuild_if_missing:
+        index = build_embedding_index(
+            root,
+            index_path,
+            provider=provider,
+            dimensions=dimensions,
+            model_name=model_name,
+            endpoint=endpoint,
+        )
+    if not index:
+        return []
+
+    index_dimensions = int(index.get("dimensions", dimensions))
+    active_provider = str(index.get("provider", provider))
+
+    if provider != active_provider:
+        raise ValueError(
+            "Incompatibilidade de embeddings detectada: O índice local foi construído utilizando "
+            f"o provedor '{active_provider}', mas a configuração/busca atual solicita "
+            f"'{provider}'. "
+            f"Se você deseja usar '{provider}', certifique-se de que o provedor está online e "
+            "execute a ferramenta 'index_zettelbrain_embeddings' para reconstruir o índice. Caso "
+            "contrário, altere a configuração do EMBEDDING_PROVIDER para coincidir com o índice."
+        )
+
+    query_embedding = embed_text(
+        content,
+        provider=active_provider,
+        model_name=model_name,
+        endpoint=endpoint,
+        dimensions=index_dimensions,
+    )
+
+    if not any(query_embedding):
+        return []
+
+    results: list[EmbeddingSearchResult] = []
+    for document in index.get("documents", []):
+        path_text = document.get("path")
+        embedding = document.get("embedding")
+        if not isinstance(path_text, str) or not isinstance(embedding, list):
+            continue
+
+        doc_slug = Path(path_text).stem.lower()
+        if doc_slug in excluded_slugs:
+            continue
+
+        score = cosine_similarity(query_embedding, embedding)
+        if score <= 0:
+            continue
+
+        excerpt = ""
+        markdown_path = (root / path_text).resolve()
+        if markdown_path.exists() and root.resolve() in markdown_path.parents:
+            doc_content = markdown_path.read_text(encoding="utf-8", errors="ignore")
+            clean_text = re.sub(r"---.*?---", "", doc_content, flags=re.DOTALL).strip()
+            excerpt = re.sub(r"\s+", " ", clean_text[:180]).strip()
+
+        results.append(
+            EmbeddingSearchResult(
+                path=path_text.replace("\\", "/"),
+                score=round(score, 6),
+                excerpt=excerpt,
+                engine=_engine_name(active_provider),
+            )
+        )
+
+    return sorted(results, key=lambda result: (-result.score, result.path))[:limit]
+
+
 def hashing_embedding(text: str, *, dimensions: int) -> list[float]:
     """Generate a normalized signed hashing vector for text.
 
