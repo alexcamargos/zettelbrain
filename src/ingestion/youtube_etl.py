@@ -14,8 +14,9 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
-from xml.etree import ElementTree
+from xml.etree.ElementTree import Element
 
+import defusedxml.ElementTree as ET
 from requests.exceptions import RequestException
 from youtube_transcript_api import YouTubeTranscriptApiException
 
@@ -118,8 +119,12 @@ class YouTubeFeedReader:
         Returns:
             list[FeedVideo]: A list of FeedVideo metadata objects.
 
+        Raises:
+            DefusedXmlException: If the XML content contains forbidden entities or DTDs.
+            ET.ParseError: If the XML content is malformed.
+
         """
-        root = ElementTree.fromstring(xml_content)
+        root = ET.fromstring(xml_content, forbid_dtd=True)
         ns = {
             "atom": "http://www.w3.org/2005/Atom",
             "yt": "http://www.youtube.com/xml/schemas/2015",
@@ -411,6 +416,10 @@ def parse_youtube_feed(xml_content: str) -> list[FeedVideo]:
     Returns:
         list[FeedVideo]: A list of FeedVideo metadata objects.
 
+    Raises:
+        DefusedXmlException: If the XML content contains forbidden entities or DTDs.
+        ET.ParseError: If the XML content is malformed.
+
     """
     return YouTubeFeedReader.parse_feed_xml(xml_content)
 
@@ -556,7 +565,6 @@ def ingest_youtube_playlist(
     return pipeline.run(dry_run=dry_run, limit=limit)
 
 
-
 def main() -> None:
     """CLI execution entrypoint for the YouTube ETL.
 
@@ -624,7 +632,7 @@ def _format_seconds(value: float) -> str:
     return f"{minutes:02d}:{seconds:02d}"
 
 
-def _text(element: ElementTree.Element[str] | None) -> str:
+def _text(element: Element | None) -> str:
     """Extract and strip XML element text.
 
     Args:
