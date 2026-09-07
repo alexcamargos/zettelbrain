@@ -54,7 +54,8 @@ def test_slugify() -> None:
     """
     assert slugify("Meu Artigo Especial! 123") == "meu-artigo-especial-123"
     assert slugify("Python -- Ingestion ETL") == "python-ingestion-etl"
-    assert slugify("") == "article"
+    assert slugify("", default="article") == "article"
+    assert slugify("") == ""
 
 
 def test_fetch_and_clean_article_success(mocker: Any) -> None:
