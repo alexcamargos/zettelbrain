@@ -11,6 +11,7 @@ import argparse
 import json
 import sys
 import time
+import urllib.error
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -107,7 +108,7 @@ def fetch_and_clean_article_with_retry(
     for attempt in range(1, attempts + 1):
         try:
             result = fetch_and_clean_article(url)
-        except Exception as exc:
+        except (urllib.error.URLError, TimeoutError, ConnectionError, OSError) as exc:
             last_error = f"{type(exc).__name__}: {exc}"
             result = None
 
@@ -286,7 +287,7 @@ def main() -> None:
             retry_delay_seconds=max(0, args.retry_delay_seconds),
             access_error_log_path=access_error_log_path,
         )
-    except Exception:
+    except (ValueError, OSError):
         get_logger().exception("Article ETL raised an unexpected error.")
         sys.exit(1)
 
