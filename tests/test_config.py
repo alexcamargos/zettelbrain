@@ -76,3 +76,24 @@ def test_load_settings_requires_youtube_when_requested(
 
     with pytest.raises(ConfigError, match="YOUTUBE_PLAYLIST_ID"):
         load_settings(env_file, require_youtube=True)
+
+
+def test_load_settings_raises_value_error_on_missing_dirs(tmp_path: Path) -> None:
+    """Test that ValueError is raised if mandatory directories are missing.
+
+    Args:
+        tmp_path: Pytest temporary directory fixture.
+
+    Returns:
+        None
+
+    """
+    env_file = tmp_path / ".env"
+    env_file.write_text(f"OBSIDIAN_VAULT_PATH={tmp_path}\n", encoding="utf-8")
+    
+    # Do not create the expected raw/articles directories
+    
+    # We expect a pydantic.ValidationError (which wraps the ValueError raised in the validator)
+    from pydantic import ValidationError
+    with pytest.raises(ValidationError, match="Diretorios obrigatorios ausentes ou invalidos"):
+        load_settings(env_file)
