@@ -1256,6 +1256,7 @@ name = "zettelbrain"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "defusedxml" },
     { name = "feedparser" },
     { name = "loguru" },
     { name = "mcp" },
@@ -1276,6 +1277,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "defusedxml", specifier = ">=0.7.1" },
     { name = "feedparser", specifier = ">=6.0.11" },
     { name = "loguru", specifier = ">=0.7.3" },
     { name = "mcp", specifier = ">=1.9.0" },
