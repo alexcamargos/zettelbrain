@@ -12,6 +12,7 @@ from tools_embeddings import (
     embedding_status,
     hashing_embedding,
     semantic_search,
+    suggest_note_links,
 )
 
 
@@ -360,3 +361,63 @@ def test_semantic_search_raises_value_error_on_provider_mismatch(
             endpoint="http://localhost:11434/api/embeddings",
             rebuild_if_missing=False,
         )
+
+
+def test_suggest_note_links_excludes_existing_links(tmp_path: Path) -> None:
+    """Test that suggest_note_links excludes the note itself and already linked notes.
+
+    Args:
+        tmp_path: Pytest temporary directory fixture.
+
+    Returns:
+        None
+
+    """
+    zettelbrain = tmp_path / "zettelbrain"
+    zettelbrain.mkdir()
+    
+    # We create three notes with similar content to ensure they rank high semantically
+    _write_note(
+        zettelbrain,
+        "permanent/main_note.md",
+        "credito cooperativo financeiro [[linked_note]]",
+    )
+    _write_note(zettelbrain, "permanent/linked_note.md", "credito cooperativo já linkado")
+    _write_note(
+        zettelbrain,
+        "permanent/unlinked_note.md",
+        "credito cooperativo financeiro não linkado",
+    )
+    
+    index_path = tmp_path / ".state" / "embeddings_index.json"
+
+    build_embedding_index(
+        zettelbrain,
+        index_path,
+        provider="hashing",
+        dimensions=16,
+        model_name="nomic-embed-text",
+        endpoint=None,
+    )
+
+    results = suggest_note_links(
+        zettelbrain,
+        index_path,
+        "permanent/main_note.md",
+        limit=5,
+        provider="hashing",
+        dimensions=16,
+        model_name="nomic-embed-text",
+        endpoint=None,
+    )
+
+    result_paths = {result.path for result in results}
+    
+    # It should not suggest itself
+    assert "permanent/main_note.md" not in result_paths
+    
+    # It should not suggest the note that is already linked
+    assert "permanent/linked_note.md" not in result_paths
+    
+    # It should suggest the unlinked similar note
+    assert "permanent/unlinked_note.md" in result_paths
