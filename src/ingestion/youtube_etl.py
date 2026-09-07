@@ -16,6 +16,9 @@ from pathlib import Path
 from typing import Any
 from xml.etree import ElementTree
 
+from requests.exceptions import RequestException
+from youtube_transcript_api import YouTubeTranscriptApiException
+
 from config import Settings, load_settings
 from logger import configure_logging, get_logger
 from utils import slugify
@@ -344,7 +347,7 @@ class YouTubeETLPipeline:
                 self.writer.append_processed_id(video.video_id)
                 created.append(created_path)
                 logger.info("youtube_etl_artifact_created path={}", created_path)
-            except Exception as exc:
+            except (YouTubeTranscriptApiException, RequestException, OSError) as exc:
                 logger.exception(
                     "youtube_etl_video_failed id={} title={} error_type={} error={}",
                     video.video_id,
