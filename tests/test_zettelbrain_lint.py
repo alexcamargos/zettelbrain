@@ -9,6 +9,7 @@ from collections.abc import Generator
 from pathlib import Path
 
 import pytest
+from pytest_mock import MockerFixture
 
 from zettelbrain_lint import (
     ZettelLinter,
@@ -425,3 +426,73 @@ def test_linter_renames_article_literature(tmp_path: Path) -> None:
     assert (literature_dir / "article-titulo-do-artigo.md").exists()
     assert len(result.fixes) == 1
     assert result.fixes[0].details["new_slug"] == "article-titulo-do-artigo"
+
+
+def test_linter_handles_corrupted_yaml_frontmatter_as_parsing_error(tmp_path: Path) -> None:
+    """Garante que frontmatter YAML corrompido gere erro de parsing sem interromper o linter.
+
+    Args:
+        tmp_path: Fixture nativa do pytest para diretórios temporários.
+
+    Returns:
+        None
+
+    """
+    zettel_dir = tmp_path / "zettelbrain"
+    literature_dir = zettel_dir / "literature"
+    literature_dir.mkdir(parents=True)
+
+    corrupt_note = literature_dir / "corrupted-note.md"
+    corrupt_note.write_text(
+        "---\n"
+        "type: literature\n"
+        "title: [unclosed list\n"
+        "---\n"
+        "Conteudo da nota.",
+        encoding="utf-8",
+    )
+
+    result = run_linter(zettel_dir)
+
+    parsing_errors = [err for err in result.errors if err.type == "parsing_error"]
+    assert len(parsing_errors) == 1
+    assert "corrupted-note.md" in parsing_errors[0].file_path
+
+
+def test_linter_handles_unreadable_file_without_unbound_local_error(
+    tmp_path: Path,
+    mocker: MockerFixture,
+) -> None:
+    """Garante que arquivo inacessivel seja tratado como parsing_error sem UnboundLocalError.
+
+    Args:
+        tmp_path: Fixture nativa do pytest para diretórios temporários.
+        mocker: Fixture do pytest-mock.
+
+    Returns:
+        None
+
+    """
+    zettel_dir = tmp_path / "zettelbrain"
+    literature_dir = zettel_dir / "literature"
+    literature_dir.mkdir(parents=True)
+
+    test_note = literature_dir / "unreadable-note.md"
+    test_note.write_text("dummy", encoding="utf-8")
+
+    original_read_text = Path.read_text
+
+    def fake_read_text(self: Path, *args: object, **kwargs: object) -> str:
+        if self.name == "unreadable-note.md":
+            raise OSError("Permission denied")
+        return original_read_text(self, *args, **kwargs)
+
+    mocker.patch.object(Path, "read_text", autospec=True, side_effect=fake_read_text)
+
+    result = run_linter(zettel_dir)
+
+    parsing_errors = [err for err in result.errors if err.type == "parsing_error"]
+    assert len(parsing_errors) == 1
+    assert "unreadable-note.md" in parsing_errors[0].file_path
+    assert "Permission denied" in parsing_errors[0].message
+
