@@ -17,6 +17,7 @@ from pytest_mock import MockerFixture
 from ingestion.article_etl import (
     fetch_and_clean_article,
     fetch_and_clean_article_with_retry,
+    main,
     save_raw_article,
     slugify,
 )
@@ -291,8 +292,6 @@ def test_main_returns_success_exit_code(mocker: MockerFixture, tmp_path: Path) -
     mock_logger = mocker.Mock()
     mocker.patch("ingestion.article_etl.get_logger", return_value=mock_logger)
 
-    from ingestion.article_etl import main
-
     with pytest.raises(SystemExit) as excinfo:
         main()
 
@@ -321,8 +320,6 @@ def test_main_returns_failure_exit_code(mocker: MockerFixture, tmp_path: Path) -
     )
     mock_logger = mocker.Mock()
     mocker.patch("ingestion.article_etl.get_logger", return_value=mock_logger)
-
-    from ingestion.article_etl import main
 
     with pytest.raises(SystemExit) as excinfo:
         main()
