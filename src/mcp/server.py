@@ -20,6 +20,7 @@ if str(SRC_ROOT) not in sys.path:
 if str(MCP_TOOLS_ROOT) not in sys.path:
     sys.path.insert(0, str(MCP_TOOLS_ROOT))
 
+import anyio
 from tools_embeddings import (
     build_embedding_index,
     embedding_status,
@@ -75,7 +76,7 @@ def health() -> dict[str, Any]:
 
 
 @log_skill_execution
-def search_zettelbrain(query: str, limit: int = 8) -> list[dict[str, Any]]:
+async def search_zettelbrain(query: str, limit: int = 8) -> list[dict[str, Any]]:
     """Perform a hybrid (lexical + semantic qmd fallback) search on the ZettelBrain.
 
     Args:
@@ -86,97 +87,109 @@ def search_zettelbrain(query: str, limit: int = 8) -> list[dict[str, Any]]:
         list[dict[str, Any]]: List of dictionary mappings representing search results.
 
     """
-    primary_results = hybrid_search(
-        settings.zettelkasten_path,
-        query,
-        limit=limit,
-        qmd_command=settings.qmd_command,
-    )
-    if primary_results and primary_results[0].engine == "qmd":
-        results = primary_results
-    else:
-        semantic_results = semantic_search(
+    def _do_search() -> list[dict[str, Any]]:
+        primary_results = hybrid_search(
             settings.zettelkasten_path,
-            settings.embedding_index_path,
             query,
             limit=limit,
-            provider=settings.embedding_provider,
-            dimensions=settings.embedding_dimensions,
-            model_name=settings.embedding_model_name,
-            endpoint=settings.embedding_endpoint,
+            qmd_command=settings.qmd_command,
         )
-        results = merge_search_results(
-            primary_results,
-            [
-                SearchResult(
-                    path=result.path,
-                    score=result.score,
-                    excerpt=result.excerpt,
-                    engine=result.engine,
-                )
-                for result in semantic_results
-            ],
-            limit=limit,
-        )
-    return [result.__dict__ for result in results]
+        if primary_results and primary_results[0].engine == "qmd":
+            results = primary_results
+        else:
+            semantic_results = semantic_search(
+                settings.zettelkasten_path,
+                settings.embedding_index_path,
+                query,
+                limit=limit,
+                provider=settings.embedding_provider,
+                dimensions=settings.embedding_dimensions,
+                model_name=settings.embedding_model_name,
+                endpoint=settings.embedding_endpoint,
+            )
+            results = merge_search_results(
+                primary_results,
+                [
+                    SearchResult(
+                        path=result.path,
+                        score=result.score,
+                        excerpt=result.excerpt,
+                        engine=result.engine,
+                    )
+                    for result in semantic_results
+                ],
+                limit=limit,
+            )
+        return [result.__dict__ for result in results]
+
+    return await anyio.to_thread.run_sync(_do_search)
 
 
 @log_skill_execution
-def retrieval_health() -> dict[str, Any]:
+async def retrieval_health() -> dict[str, Any]:
     """Retrieve operational status for the retrieval engine.
 
     Returns:
         dict[str, Any]: Dictionary representing the current retrieval status.
 
     """
-    return retrieval_status(settings.qmd_command).__dict__
+    def _do_health() -> dict[str, Any]:
+        return retrieval_status(settings.qmd_command).__dict__
+        
+    return await anyio.to_thread.run_sync(_do_health)
 
 
 @log_skill_execution
-def embedding_health() -> dict[str, Any]:
+async def embedding_health() -> dict[str, Any]:
     """Return status for the local semantic embedding index.
 
     Returns:
         dict[str, Any]: Dictionary representing the local embedding status.
 
     """
-    return embedding_status(
-        settings.embedding_index_path,
-        provider=settings.embedding_provider,
-        model_name=settings.embedding_model_name,
-        endpoint=settings.embedding_endpoint,
-        dimensions=settings.embedding_dimensions,
-    ).__dict__
+    def _do_health() -> dict[str, Any]:
+        return embedding_status(
+            settings.embedding_index_path,
+            provider=settings.embedding_provider,
+            model_name=settings.embedding_model_name,
+            endpoint=settings.embedding_endpoint,
+            dimensions=settings.embedding_dimensions,
+        ).__dict__
+        
+    return await anyio.to_thread.run_sync(_do_health)
 
 
 @log_skill_execution
-def index_zettelbrain_embeddings() -> dict[str, Any]:
+async def index_zettelbrain_embeddings() -> dict[str, Any]:
     """Rebuild the local embedding index for Markdown files in the ZettelBrain.
 
     Returns:
         dict[str, Any]: Summary details of the generated embedding index.
 
     """
-    index = build_embedding_index(
-        settings.zettelkasten_path,
-        settings.embedding_index_path,
-        provider=settings.embedding_provider,
-        dimensions=settings.embedding_dimensions,
-        model_name=settings.embedding_model_name,
-        endpoint=settings.embedding_endpoint,
-    )
-    return {
-        "provider": index["provider"],
-        "model_name": index["model_name"],
-        "index_path": str(settings.embedding_index_path),
-        "document_count": len(index["documents"]),
-        "dimensions": index["dimensions"],
-        "indexed_at": index["indexed_at"],
-    }
+    def _do_index() -> dict[str, Any]:
+        index = build_embedding_index(
+            settings.zettelkasten_path,
+            settings.embedding_index_path,
+            provider=settings.embedding_provider,
+            dimensions=settings.embedding_dimensions,
+            model_name=settings.embedding_model_name,
+            endpoint=settings.embedding_endpoint,
+        )
+        return {
+            "provider": index["provider"],
+            "model_name": index["model_name"],
+            "index_path": str(settings.embedding_index_path),
+            "document_count": len(index["documents"]),
+            "dimensions": index["dimensions"],
+            "indexed_at": index["indexed_at"],
+        }
+        
+    return await anyio.to_thread.run_sync(_do_index)
 
 
 @log_skill_execution
-def semantic_search_zettelbrain(query: str, limit: int = 8) -> list[dict[str, Any]]:
+async def semantic_search_zettelbrain(query: str, limit: int = 8) -> list[dict[str, Any]]:
     """Search the ZettelBrain through the local semantic embedding index.
 
     Args:
@@ -187,23 +200,26 @@ def semantic_search_zettelbrain(query: str, limit: int = 8) -> list[dict[str, An
         list[dict[str, Any]]: List of dictionary mappings representing matching search results.
 
     """
-    return [
-        result.__dict__
-        for result in semantic_search(
-            settings.zettelkasten_path,
-            settings.embedding_index_path,
-            query,
-            limit=limit,
-            provider=settings.embedding_provider,
-            dimensions=settings.embedding_dimensions,
-            model_name=settings.embedding_model_name,
-            endpoint=settings.embedding_endpoint,
-        )
-    ]
+    def _do_search() -> list[dict[str, Any]]:
+        return [
+            result.__dict__
+            for result in semantic_search(
+                settings.zettelkasten_path,
+                settings.embedding_index_path,
+                query,
+                limit=limit,
+                provider=settings.embedding_provider,
+                dimensions=settings.embedding_dimensions,
+                model_name=settings.embedding_model_name,
+                endpoint=settings.embedding_endpoint,
+            )
+        ]
+        
+    return await anyio.to_thread.run_sync(_do_search)
 
 
 @log_skill_execution
-def suggest_zettelbrain_links(relative_path: str, limit: int = 5) -> list[dict[str, Any]]:
+async def suggest_zettelbrain_links(relative_path: str, limit: int = 5) -> list[dict[str, Any]]:
     """Suggest semantic links for a specific note, excluding existing links.
 
     Args:
@@ -214,34 +230,40 @@ def suggest_zettelbrain_links(relative_path: str, limit: int = 5) -> list[dict[s
         list[dict[str, Any]]: List of dictionary mappings representing unlinked similar notes.
 
     """
-    return [
-        result.__dict__
-        for result in suggest_note_links(
-            settings.zettelkasten_path,
-            settings.embedding_index_path,
-            relative_path,
-            limit=limit,
-            provider=settings.embedding_provider,
-            dimensions=settings.embedding_dimensions,
-            model_name=settings.embedding_model_name,
-            endpoint=settings.embedding_endpoint,
-        )
-    ]
+    def _do_suggest() -> list[dict[str, Any]]:
+        return [
+            result.__dict__
+            for result in suggest_note_links(
+                settings.zettelkasten_path,
+                settings.embedding_index_path,
+                relative_path,
+                limit=limit,
+                provider=settings.embedding_provider,
+                dimensions=settings.embedding_dimensions,
+                model_name=settings.embedding_model_name,
+                endpoint=settings.embedding_endpoint,
+            )
+        ]
+        
+    return await anyio.to_thread.run_sync(_do_suggest)
 
 
 @log_skill_execution
-def list_zettelbrain_markdown() -> list[str]:
+async def list_zettelbrain_markdown() -> list[str]:
     """List all markdown files inside the ZettelBrain folder.
 
     Returns:
         list[str]: Relative path strings of markdown files.
 
     """
-    return list_markdown_files(settings.zettelkasten_path)
+    def _do_list() -> list[str]:
+        return list_markdown_files(settings.zettelkasten_path)
+        
+    return await anyio.to_thread.run_sync(_do_list)
 
 
 @log_skill_execution
-def get_semantic_bridge(
+async def get_semantic_bridge(
     min_similarity: float = 0.05,
     max_similarity: float = 0.4,
 ) -> dict[str, Any]:
@@ -255,15 +277,18 @@ def get_semantic_bridge(
         dict[str, Any]: Details of the two bridge notes, similarity score, titles, or status.
 
     """
-    return find_semantic_bridge(
-        settings.embedding_index_path,
-        min_similarity=min_similarity,
-        max_similarity=max_similarity,
-    )
+    def _do_bridge() -> dict[str, Any]:
+        return find_semantic_bridge(
+            settings.embedding_index_path,
+            min_similarity=min_similarity,
+            max_similarity=max_similarity,
+        )
+        
+    return await anyio.to_thread.run_sync(_do_bridge)
 
 
 @log_skill_execution
-def read_zettelbrain_markdown(relative_path: str) -> str:
+async def read_zettelbrain_markdown(relative_path: str) -> str:
     """Read the full content of a markdown file in the ZettelBrain.
 
     Args:
@@ -273,11 +298,14 @@ def read_zettelbrain_markdown(relative_path: str) -> str:
         str: UTF-8 decoded text content of the markdown file.
 
     """
-    return read_markdown_file(settings.zettelkasten_path, relative_path)
+    def _do_read() -> str:
+        return read_markdown_file(settings.zettelkasten_path, relative_path)
+        
+    return await anyio.to_thread.run_sync(_do_read)
 
 
 @log_skill_execution
-def write_zettelbrain_markdown(relative_path: str, content: str) -> str:
+async def write_zettelbrain_markdown(relative_path: str, content: str) -> str:
     """Write the UTF-8 content to a markdown file in the ZettelBrain safely.
 
     Args:
@@ -288,11 +316,14 @@ def write_zettelbrain_markdown(relative_path: str, content: str) -> str:
         str: Relative path of the written file.
 
     """
-    return write_markdown_file(settings.zettelkasten_path, relative_path, content)
+    def _do_write() -> str:
+        return write_markdown_file(settings.zettelkasten_path, relative_path, content)
+        
+    return await anyio.to_thread.run_sync(_do_write)
 
 
 @log_skill_execution
-def lint_zettelbrain() -> dict[str, Any]:
+async def lint_zettelbrain() -> dict[str, Any]:
     """Run the static audit and validation linter for ZettelBrain.
 
     Identifies dead links, orphan notes, minimal graph connections,
@@ -304,11 +335,14 @@ def lint_zettelbrain() -> dict[str, Any]:
         dict[str, Any]: Linting result structure.
 
     """
-    return run_lint_logic()
+    def _do_lint() -> dict[str, Any]:
+        return run_lint_logic()
+        
+    return await anyio.to_thread.run_sync(_do_lint)
 
 
 @log_skill_execution
-def inspect_pdf_manifest(source_path: str) -> dict[str, Any]:
+async def inspect_pdf_manifest(source_path: str) -> dict[str, Any]:
     """Search and inspect the PageIndex manifest for a given PDF path.
 
     Args:
@@ -318,23 +352,29 @@ def inspect_pdf_manifest(source_path: str) -> dict[str, Any]:
         dict[str, Any]: Manifest details if found, otherwise an empty representation.
 
     """
-    manifest = find_pageindex_manifest(settings.vault_path / ".pageindex", source_path)
-    return manifest or {"found": False, "source_path": source_path}
+    def _do_inspect() -> dict[str, Any]:
+        manifest = find_pageindex_manifest(settings.vault_path / ".pageindex", source_path)
+        return manifest or {"found": False, "source_path": source_path}
+        
+    return await anyio.to_thread.run_sync(_do_inspect)
 
 
 @log_skill_execution
-def list_pdf_manifests() -> list[dict[str, Any]]:
+async def list_pdf_manifests() -> list[dict[str, Any]]:
     """List all PageIndex manifests cached in the vault.
 
     Returns:
         list[dict[str, Any]]: List of metadata dictionaries representing cached manifests.
 
     """
-    return list_pageindex_manifests(settings.vault_path / ".pageindex")
+    def _do_list() -> list[dict[str, Any]]:
+        return list_pageindex_manifests(settings.vault_path / ".pageindex")
+        
+    return await anyio.to_thread.run_sync(_do_list)
 
 
 @log_skill_execution
-def read_pdf_cache(
+async def read_pdf_cache(
     document_id: str,
     query: str | None = None,
     limit: int = 5,
@@ -351,16 +391,19 @@ def read_pdf_cache(
             and search matches.
 
     """
-    return read_pageindex_cache(
-        settings.vault_path / ".pageindex",
-        document_id,
-        query=query,
-        limit=limit,
-    )
+    def _do_read() -> dict[str, Any]:
+        return read_pageindex_cache(
+            settings.vault_path / ".pageindex",
+            document_id,
+            query=query,
+            limit=limit,
+        )
+        
+    return await anyio.to_thread.run_sync(_do_read)
 
 
 @log_skill_execution
-def resolve_pdf(relative_path: str) -> dict[str, Any]:
+async def resolve_pdf(relative_path: str) -> dict[str, Any]:
     """Resolve a PDF's document ID and verify if its cache exists in PageIndex.
 
     Args:
@@ -370,16 +413,19 @@ def resolve_pdf(relative_path: str) -> dict[str, Any]:
         dict[str, Any]: Map containing source path, document ID, cache status and manifest.
 
     """
-    return resolve_pdf_cache(
-        settings.vault_path,
-        settings.raw_papers_path,
-        settings.vault_path / ".pageindex",
-        relative_path,
-    )
+    def _do_resolve() -> dict[str, Any]:
+        return resolve_pdf_cache(
+            settings.vault_path,
+            settings.raw_papers_path,
+            settings.vault_path / ".pageindex",
+            relative_path,
+        )
+        
+    return await anyio.to_thread.run_sync(_do_resolve)
 
 
 @log_skill_execution
-def read_pdf_page(document_id: str, page: int) -> dict[str, Any]:
+async def read_pdf_page(document_id: str, page: int) -> dict[str, Any]:
     """Retrieve the text content of a single page from a cached PDF.
 
     Args:
@@ -390,11 +436,14 @@ def read_pdf_page(document_id: str, page: int) -> dict[str, Any]:
         dict[str, Any]: Page search status, manifest, text content and node count.
 
     """
-    return read_pageindex_page(settings.vault_path / ".pageindex", document_id, page)
+    def _do_read_page() -> dict[str, Any]:
+        return read_pageindex_page(settings.vault_path / ".pageindex", document_id, page)
+        
+    return await anyio.to_thread.run_sync(_do_read_page)
 
 
 @log_skill_execution
-def persist_pdf_cache(relative_path: str, tree_json: str) -> dict[str, Any]:
+async def persist_pdf_cache(relative_path: str, tree_json: str) -> dict[str, Any]:
     """Persist a PageIndex tree and its manifest metadata to the cache directory.
 
     Args:
@@ -405,17 +454,20 @@ def persist_pdf_cache(relative_path: str, tree_json: str) -> dict[str, Any]:
         dict[str, Any]: Details of the persisted paths, document ID and manifest.
 
     """
-    return persist_pageindex_cache(
-        settings.vault_path,
-        settings.raw_papers_path,
-        settings.vault_path / ".pageindex",
-        relative_path,
-        tree_json,
-    )
+    def _do_persist() -> dict[str, Any]:
+        return persist_pageindex_cache(
+            settings.vault_path,
+            settings.raw_papers_path,
+            settings.vault_path / ".pageindex",
+            relative_path,
+            tree_json,
+        )
+        
+    return await anyio.to_thread.run_sync(_do_persist)
 
 
 @log_skill_execution
-def index_pdf_cache(relative_path: str) -> dict[str, Any]:
+async def index_pdf_cache(relative_path: str) -> dict[str, Any]:
     """Run the configured external PageIndex command and persist its cache output.
 
     Args:
@@ -425,17 +477,20 @@ def index_pdf_cache(relative_path: str) -> dict[str, Any]:
         dict[str, Any]: Metadata detailing the persisted cache structure.
 
     """
-    return index_pdf_with_command(
-        settings.vault_path,
-        settings.raw_papers_path,
-        settings.vault_path / ".pageindex",
-        relative_path,
-        pageindex_command=settings.pageindex_command,
-    )
+    def _do_index_cache() -> dict[str, Any]:
+        return index_pdf_with_command(
+            settings.vault_path,
+            settings.raw_papers_path,
+            settings.vault_path / ".pageindex",
+            relative_path,
+            pageindex_command=settings.pageindex_command,
+        )
+        
+    return await anyio.to_thread.run_sync(_do_index_cache)
 
 
 @log_skill_execution
-def compute_pdf_sha256(relative_path: str) -> dict[str, str]:
+async def compute_pdf_sha256(relative_path: str) -> dict[str, str]:
     """Compute the SHA-256 checksum for a PDF inside raw/papers.
 
     Args:
@@ -448,16 +503,19 @@ def compute_pdf_sha256(relative_path: str) -> dict[str, str]:
         ValueError: If the file is not a PDF or lies outside raw/papers.
 
     """
-    pdf_path = (settings.vault_path / relative_path).resolve()
-    if settings.raw_papers_path.resolve() not in pdf_path.parents:
-        raise ValueError("Only PDFs inside raw/papers can be hashed by this tool.")
-    if pdf_path.suffix.lower() != ".pdf":
-        raise ValueError("The provided file is not a PDF.")
-    return {"source_path": relative_path, "document_id": sha256_file(pdf_path)}
+    def _do_compute() -> dict[str, str]:
+        pdf_path = (settings.vault_path / relative_path).resolve()
+        if settings.raw_papers_path.resolve() not in pdf_path.parents:
+            raise ValueError("Only PDFs inside raw/papers can be hashed by this tool.")
+        if pdf_path.suffix.lower() != ".pdf":
+            raise ValueError("The provided file is not a PDF.")
+        return {"source_path": relative_path, "document_id": sha256_file(pdf_path)}
+        
+    return await anyio.to_thread.run_sync(_do_compute)
 
 
 @log_skill_execution
-def estimate_pdf_processing(relative_path: str) -> dict[str, Any]:
+async def estimate_pdf_processing(relative_path: str) -> dict[str, Any]:
     """Estimate the cost, tokens, and time required to process a PDF.
 
     Args:
@@ -467,16 +525,19 @@ def estimate_pdf_processing(relative_path: str) -> dict[str, Any]:
         dict[str, Any]: Cost, token, and duration estimation details.
 
     """
-    return estimate_document_processing(
-        settings.vault_path,
-        settings.raw_papers_path,
-        settings.vault_path / ".pageindex",
-        relative_path,
-    )
+    def _do_estimate() -> dict[str, Any]:
+        return estimate_document_processing(
+            settings.vault_path,
+            settings.raw_papers_path,
+            settings.vault_path / ".pageindex",
+            relative_path,
+        )
+        
+    return await anyio.to_thread.run_sync(_do_estimate)
 
 
 @log_skill_execution
-def ingest_web_article(url: str, filename: str | None = None) -> dict[str, Any]:
+async def ingest_web_article(url: str, filename: str | None = None) -> dict[str, Any]:
     """Ingest a web article from a URL and save it to raw/articles/ as Markdown.
 
     Args:
@@ -488,26 +549,30 @@ def ingest_web_article(url: str, filename: str | None = None) -> dict[str, Any]:
             containing keys such as 'status', 'output_path', and 'error' if any.
 
     """
-    try:
-        saved_path = save_raw_article(
-            url=url,
-            raw_articles_path=settings.raw_articles_path,
-            filename=filename,
-        )
-        if saved_path:
+    def _do_ingest() -> dict[str, Any]:
+        try:
+            saved_path = save_raw_article(
+                url=url,
+                raw_articles_path=settings.raw_articles_path,
+                filename=filename,
+            )
+            if saved_path:
+                rel_path = str(saved_path.relative_to(settings.vault_path)).replace("\\", "/")
+                return {
+                    "status": "success",
+                    "output_path": rel_path,
+                }
             return {
-                "status": "success",
-                "output_path": str(saved_path.relative_to(settings.vault_path)).replace("\\", "/"),
+                "status": "error",
+                "error": "Failed to extract article content.",
             }
-        return {
-            "status": "error",
-            "error": "Failed to extract article content.",
-        }
-    except Exception as exc:
-        return {
-            "status": "error",
-            "error": str(exc),
-        }
+        except Exception as exc:
+            return {
+                "status": "error",
+                "error": str(exc),
+            }
+            
+    return await anyio.to_thread.run_sync(_do_ingest)
 
 
 def build_server() -> Any:
