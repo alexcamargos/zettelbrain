@@ -8,6 +8,7 @@ performance tracking and error capture for MCP tool executions.
 from __future__ import annotations
 
 import functools
+import inspect
 import logging
 import sys
 import time
@@ -83,12 +84,53 @@ def log_skill_execution(func: F) -> F:
         func: The callable MCP tool handler to decorate.
 
     Returns:
-        F: The decorated callable wrapper.
+        F: The decorated callable wrapper (sync or async depending on func).
 
     """
 
+    if inspect.iscoroutinefunction(func):
+        @functools.wraps(func)
+        async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
+            """Measure elapsed time and log errors for decorated async MCP tool handlers.
+
+            Args:
+                *args: Variable positional arguments for the decorated function.
+                **kwargs: Variable keyword arguments for the decorated function.
+
+            Returns:
+                Any: The result of the decorated function.
+
+            Raises:
+                Exception: Re-raises any exception caught from the decorated function.
+
+            """
+            logger = get_logger()
+            started = time.perf_counter()
+            tool_name = func.__name__
+            if _logger is not None:
+                logger.info("skill_start name={} args={} kwargs={}", tool_name, args, kwargs)
+            else:
+                logger.info("skill_start name=%s args=%s kwargs=%s", tool_name, args, kwargs)
+            try:
+                result = await func(*args, **kwargs)
+            except Exception:
+                elapsed_ms = (time.perf_counter() - started) * 1000
+                if _logger is not None:
+                    logger.exception("skill_error name={} elapsed_ms={:.2f}", tool_name, elapsed_ms)
+                else:
+                    logger.exception("skill_error name=%s elapsed_ms=%.2f", tool_name, elapsed_ms)
+                raise
+            elapsed_ms = (time.perf_counter() - started) * 1000
+            if _logger is not None:
+                logger.info("skill_end name={} elapsed_ms={:.2f}", tool_name, elapsed_ms)
+            else:
+                logger.info("skill_end name=%s elapsed_ms=%.2f", tool_name, elapsed_ms)
+            return result
+
+        return async_wrapper  # type: ignore[return-value]
+
     @functools.wraps(func)
-    def wrapper(*args: Any, **kwargs: Any) -> Any:
+    def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
         """Measure elapsed time and log errors for decorated MCP tool handlers.
 
         Args:
@@ -125,4 +167,4 @@ def log_skill_execution(func: F) -> F:
             logger.info("skill_end name=%s elapsed_ms=%.2f", tool_name, elapsed_ms)
         return result
 
-    return wrapper  # type: ignore[return-value]
+    return sync_wrapper  # type: ignore[return-value]
