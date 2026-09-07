@@ -44,7 +44,7 @@ def _load_stop_words() -> frozenset[str]:
         pt_words = set(data.get("portuguese", []))
         en_words = set(data.get("english", []))
         return frozenset(pt_words | en_words)
-    except Exception as exc:
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError, AttributeError, TypeError) as exc:
         get_logger().error(f"Error loading stop words from {config_path}: {exc}")
         return frozenset()
 
@@ -894,7 +894,7 @@ def _extract_title(path: Path) -> str:
         yaml_match = re.search(r"title:\s*\"?([^\n\"]+)\"?", content)
         if yaml_match:
             return yaml_match.group(1).strip()
-    except Exception:
+    except OSError:
         pass
     return path.stem
 
