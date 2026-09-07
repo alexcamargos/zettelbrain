@@ -9,6 +9,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+from defusedxml.common import DefusedXmlException, DTDForbidden
 from youtube_transcript_api import CouldNotRetrieveTranscript
 
 from ingestion.youtube_etl import (
@@ -53,6 +54,48 @@ def test_parse_youtube_feed_extracts_video_metadata() -> None:
             published_at="2026-06-04T10:00:00+00:00",
         )
     ]
+
+
+def test_parse_youtube_feed_blocks_entity_expansion() -> None:
+    """Test that parse_youtube_feed blocks entity expansion attacks (e.g. Billion Laughs).
+
+    Returns:
+        None
+
+    """
+    malicious_xml = """<?xml version="1.0"?>
+    <!DOCTYPE lolz [
+      <!ENTITY lol "lol">
+      <!ELEMENT lolz (#PCDATA)>
+      <!ENTITY lol1 "&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;">
+    ]>
+    <feed xmlns:yt="http://www.youtube.com/xml/schemas/2015"
+          xmlns="http://www.w3.org/2005/Atom">
+      <entry>
+        <yt:videoId>&lol1;</yt:videoId>
+        <title>Malicious Video</title>
+        <link rel="alternate" href="https://www.youtube.com/watch?v=123"/>
+      </entry>
+    </feed>
+    """
+    with pytest.raises(DefusedXmlException):
+        parse_youtube_feed(malicious_xml)
+
+
+def test_parse_youtube_feed_blocks_dtd_declaration() -> None:
+    """Test that parse_youtube_feed blocks DTD declarations.
+
+    Returns:
+        None
+
+    """
+    dtd_xml = """<?xml version="1.0"?>
+    <!DOCTYPE feed SYSTEM "http://evil.com/feed.dtd">
+    <feed xmlns="http://www.w3.org/2005/Atom">
+    </feed>
+    """
+    with pytest.raises(DTDForbidden):
+        parse_youtube_feed(dtd_xml)
 
 
 def test_render_transcript_markdown_has_ingest_article_contract() -> None:
