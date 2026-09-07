@@ -8,6 +8,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+from youtube_transcript_api import CouldNotRetrieveTranscript
+
 from ingestion.youtube_etl import (
     FeedVideo,
     TranscriptSegment,
@@ -102,7 +105,7 @@ def test_youtube_etl_continues_after_individual_transcript_failure() -> None:
     second_video = FeedVideo("ok", "Com legenda", "https://youtube.test/watch?v=2")
     feed_reader = _FakeFeedReader([first_video, second_video])
     transcript_fetcher = _FakeTranscriptFetcher(
-        failures={"sem-legenda": RuntimeError("transcript unavailable")},
+        failures={"sem-legenda": CouldNotRetrieveTranscript("sem-legenda")},
         transcripts={"ok": [TranscriptSegment("conteudo processado")]},
     )
     writer = _FakeTranscriptWriter()
@@ -114,6 +117,21 @@ def test_youtube_etl_continues_after_individual_transcript_failure() -> None:
     assert transcript_fetcher.fetched_ids == ["sem-legenda", "ok"]
     assert writer.written_video_ids == ["ok"]
     assert writer.processed_ids == {"ok"}
+
+
+def test_youtube_etl_does_not_catch_unexpected_exceptions() -> None:
+    """Test that unexpected programming exceptions (e.g., TypeError) are not swallowed."""
+    video = FeedVideo("erro-inesperado", "Erro", "https://youtube.test/watch?v=1")
+    feed_reader = _FakeFeedReader([video])
+    transcript_fetcher = _FakeTranscriptFetcher(
+        failures={"erro-inesperado": TypeError("unexpected type error")},
+        transcripts={},
+    )
+    writer = _FakeTranscriptWriter()
+    pipeline = YouTubeETLPipeline(feed_reader, transcript_fetcher, writer)
+
+    with pytest.raises(TypeError, match="unexpected type error"):
+        pipeline.run()
 
 
 def test_fetch_raw_transcript_supports_legacy_class_method_api() -> None:
