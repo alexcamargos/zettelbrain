@@ -566,7 +566,7 @@ async def ingest_web_article(url: str, filename: str | None = None) -> dict[str,
                 "status": "error",
                 "error": "Failed to extract article content.",
             }
-        except Exception as exc:
+        except (ValueError, OSError) as exc:
             return {
                 "status": "error",
                 "error": str(exc),
