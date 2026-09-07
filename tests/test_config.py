@@ -8,6 +8,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+from pydantic import ValidationError
 
 from config import ConfigError, load_settings
 
@@ -94,6 +95,5 @@ def test_load_settings_raises_value_error_on_missing_dirs(tmp_path: Path) -> Non
     # Do not create the expected raw/articles directories
     
     # We expect a pydantic.ValidationError (which wraps the ValueError raised in the validator)
-    from pydantic import ValidationError
     with pytest.raises(ValidationError, match="Diretorios obrigatorios ausentes ou invalidos"):
         load_settings(env_file)
