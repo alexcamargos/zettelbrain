@@ -7,6 +7,7 @@ and saving to markdown format with correct metadata and YAML front matter.
 from __future__ import annotations
 
 import json
+import urllib.error
 from pathlib import Path
 from typing import Any
 
@@ -335,3 +336,56 @@ def test_main_returns_failure_exit_code(mocker: MockerFixture, tmp_path: Path) -
         retry_delay_seconds=30,
         access_error_log_path=tmp_path / "logs" / "article_access_errors.jsonl",
     )
+
+
+def test_fetch_and_clean_article_with_retry_retries_on_network_error(
+    mocker: MockerFixture,
+) -> None:
+    """Tests access retry recovers from transient network errors on subsequent attempt."""
+    attempts = {"count": 0}
+
+    def fake_fetch(url: str) -> dict[str, Any] | None:
+        attempts["count"] += 1
+        if attempts["count"] == 1:
+            raise urllib.error.URLError("connection reset")
+        return {
+            "title": "Título",
+            "author": "Autor",
+            "date": "2026-06-07",
+            "url": url,
+            "content": "Conteúdo",
+        }
+
+    mocker.patch("ingestion.article_etl.fetch_and_clean_article", side_effect=fake_fetch)
+    sleeper = mocker.Mock()
+
+    result = fetch_and_clean_article_with_retry(
+        "https://example.com/artigo",
+        retry_delay_seconds=10,
+        sleep_func=sleeper,
+    )
+
+    assert result is not None
+    assert attempts["count"] == 2
+    sleeper.assert_called_once_with(10)
+
+
+def test_fetch_and_clean_article_with_retry_does_not_catch_value_error(
+    mocker: MockerFixture,
+) -> None:
+    """Tests that ValueError propagates immediately without sleeping or retrying."""
+    mocker.patch(
+        "ingestion.article_etl.fetch_and_clean_article",
+        side_effect=ValueError("Article URL cannot be empty."),
+    )
+    sleeper = mocker.Mock()
+
+    with pytest.raises(ValueError, match="Article URL cannot be empty."):
+        fetch_and_clean_article_with_retry(
+            "",
+            retry_delay_seconds=10,
+            sleep_func=sleeper,
+        )
+
+    sleeper.assert_not_called()
+
