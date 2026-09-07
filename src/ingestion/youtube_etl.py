@@ -17,8 +17,12 @@ from typing import Any
 from xml.etree.ElementTree import Element
 
 import defusedxml.ElementTree as ET
+import feedparser
 from requests.exceptions import RequestException
-from youtube_transcript_api import YouTubeTranscriptApiException
+from youtube_transcript_api import (
+    YouTubeTranscriptApi,
+    YouTubeTranscriptApiException,
+)
 
 from config import Settings, load_settings
 from logger import configure_logging, get_logger
@@ -89,8 +93,6 @@ class YouTubeFeedReader:
             list[FeedVideo]: A list of FeedVideo metadata objects.
 
         """
-        import feedparser
-
         parsed_feed = feedparser.parse(self.get_feed_url())
         videos: list[FeedVideo] = []
         for entry in parsed_feed.entries:
@@ -170,8 +172,6 @@ class YouTubeTranscriptFetcher:
             list[TranscriptSegment]: List of retrieved transcript segments.
 
         """
-        from youtube_transcript_api import YouTubeTranscriptApi
-
         raw_segments = _fetch_raw_transcript(YouTubeTranscriptApi, video_id, self.languages)
         return [
             TranscriptSegment(
