@@ -276,17 +276,54 @@ def main() -> None:
     args = parser.parse_args()
 
     settings = load_settings()
-    configure_logging(settings.logs_path)
+    log_level = getattr(settings, "log_level", "INFO")
+    if not isinstance(log_level, str):
+        log_level = "INFO"
+    log_rotation = getattr(settings, "log_rotation", "10 MB")
+    if not isinstance(log_rotation, str):
+        log_rotation = "10 MB"
+    log_retention = getattr(settings, "log_retention", "14 days")
+    if not isinstance(log_retention, str):
+        log_retention = "14 days"
+
+    configure_logging(
+        settings.logs_path,
+        level=log_level,
+        rotation=log_rotation,
+        retention=log_retention,
+    )
     access_error_log_path = settings.logs_path / "article_access_errors.jsonl"
 
+    raw_retry_delay = getattr(
+        settings, "article_fetch_retry_delay_seconds", DEFAULT_FETCH_RETRY_DELAY_SECONDS
+    )
+    if not isinstance(raw_retry_delay, int):
+        raw_retry_delay = DEFAULT_FETCH_RETRY_DELAY_SECONDS
+
+    retry_delay = (
+        args.retry_delay_seconds
+        if args.retry_delay_seconds != DEFAULT_FETCH_RETRY_DELAY_SECONDS
+        else raw_retry_delay
+    )
+
+    max_attempts = getattr(
+        settings, "article_fetch_max_attempts", DEFAULT_FETCH_MAX_ATTEMPTS
+    )
+    if not isinstance(max_attempts, int):
+        max_attempts = DEFAULT_FETCH_MAX_ATTEMPTS
+
+    call_kwargs: dict[str, Any] = {
+        "url": args.url,
+        "raw_articles_path": settings.raw_articles_path,
+        "filename": args.filename,
+        "retry_delay_seconds": max(0, retry_delay),
+        "access_error_log_path": access_error_log_path,
+    }
+    if max_attempts != DEFAULT_FETCH_MAX_ATTEMPTS:
+        call_kwargs["max_attempts"] = max(1, max_attempts)
+
     try:
-        saved_path = save_raw_article(
-            url=args.url,
-            raw_articles_path=settings.raw_articles_path,
-            filename=args.filename,
-            retry_delay_seconds=max(0, args.retry_delay_seconds),
-            access_error_log_path=access_error_log_path,
-        )
+        saved_path = save_raw_article(**call_kwargs)
     except (ValueError, OSError):
         get_logger().exception("Article ETL raised an unexpected error.")
         sys.exit(1)
