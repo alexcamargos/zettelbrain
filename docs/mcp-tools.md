@@ -16,7 +16,7 @@ uv run zettelbrain-mcp
 
 | Ferramenta | Finalidade |
 | --- | --- |
-| `health` | Retorna status, caminhos configurados e provedores ativos. |
+| `health` | Retorna status, caminhos configurados, provedores ativos e parametros operacionais. |
 | `search_zettelbrain` | Busca hibrida no cofre por `qmd`, BM25 e embeddings. |
 | `retrieval_health` | Informa se `qmd` esta configurado e disponivel. |
 | `embedding_health` | Informa status do indice de embeddings. |
