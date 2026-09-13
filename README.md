@@ -59,12 +59,13 @@ uv run pytest
 Configure um cliente de agente quando necessario:
 
 ```powershell
-uv run install gemini
+uv run install antigravity  # ou: uv run install agy
 uv run install cursor
+uv run install gemini
 uv run install clean
 ```
 
-`uv run install gemini` cria `.gemini/settings.json` e sincroniza `skills/` para `.gemini/skills/`. `uv run install cursor` cria `.cursor/mcp.json` e compila `ZETTELBRAIN.md` com `skills/` em `.cursorrules`.
+`uv run install antigravity` (ou `uv run install agy`) cria `.agents/skills/<name>/SKILL.md` com YAML frontmatter e `mcp_config.json`, permitindo autocompletar e acionamento nativo de slash commands (como `/start`) no Antigravity CLI (`agy`). `uv run install cursor` cria `.cursor/mcp.json` e compila `ZETTELBRAIN.md` com `skills/` em `.cursorrules`. `uv run install gemini` configura o cliente legado Gemini CLI e sincroniza tanto `.agents/` quanto `.gemini/`.
 
 ## Comandos de uso comum
 
@@ -79,8 +80,9 @@ uv run install clean
 | Ingerir transcricoes novas de playlist YouTube | `uv run zb-youtube-etl --limit 5` |
 | Ver candidatos YouTube sem escrever arquivos | `uv run zb-youtube-etl --dry-run` |
 | Criar estrutura local ignorada pelo Git | `uv run install bootstrap` ou `uv run install local` |
-| Configurar Gemini CLI | `uv run install gemini` |
+| Configurar Antigravity CLI (agy) | `uv run install antigravity` ou `uv run install agy` |
 | Configurar Cursor | `uv run install cursor` |
+| Configurar Gemini CLI | `uv run install gemini` |
 | Remover configuracoes locais de cliente | `uv run install clean` |
 
 ## Estrutura principal
