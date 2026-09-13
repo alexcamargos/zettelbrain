@@ -110,30 +110,44 @@ uv run pytest
 ```
 
 ## Configurar clientes
-
+ 
+Antigravity CLI (`agy`):
+ 
+```powershell
+uv run install antigravity
+```
+ 
+Alias equivalente:
+ 
+```powershell
+uv run install agy
+```
+ 
+Esse comando cria a estrutura `.agents/skills/<name>/SKILL.md` para cada skill do cofre, adiciona o cabeçalho YAML frontmatter com `name` e `description` para habilitar slash commands no autocomplete do `agy`, gera `mcp_config.json` e `.agents/mcp_config.json` apontando para o servidor MCP ZettelBrain e desativa `.cursorrules` para evitar conflito de contexto.
+ 
 Gemini CLI:
-
+ 
 ```powershell
 uv run install gemini
 ```
-
-Esse comando cria `.gemini/settings.json`, sincroniza `skills/` para `.gemini/skills/` e desativa `.cursorrules` existente renomeando para `.cursorrules.bak`.
-
+ 
+Esse comando configura tanto o Antigravity CLI quanto o cliente legado Gemini CLI (sincronizando `.gemini/skills/` e `.gemini/settings.json`).
+ 
 Cursor:
-
+ 
 ```powershell
 uv run install cursor
 ```
-
+ 
 Esse comando cria `.cursor/mcp.json` e compila [ZETTELBRAIN.md](../ZETTELBRAIN.md) com todos os arquivos de `skills/` em `.cursorrules`.
-
+ 
 Limpeza:
-
+ 
 ```powershell
 uv run install clean
 ```
-
-Remove `.gemini/`, `.cursor/`, `.cursorrules` e `.cursorrules.bak`.
+ 
+Remove `.agents/`, `.gemini/`, `.cursor/`, `mcp_config.json`, `.cursorrules` e `.cursorrules.bak`.
 
 ## ETL de artigos web
 
