@@ -18,6 +18,7 @@ ZettelBrain e composto por um cofre Markdown, um conjunto de workflows textuais 
 |   |-- config.py
 |   |-- logger.py
 |   |-- setup.py
+|   |-- utils.py
 |   |-- zettelbrain_lint.py
 |   |-- zettelbrain_mcp.py
 |   |-- ingestion/
@@ -54,9 +55,10 @@ ZettelBrain e composto por um cofre Markdown, um conjunto de workflows textuais 
 
 | Modulo | Papel |
 | --- | --- |
-| `src/config.py` | Carrega `.env`, resolve caminhos e valida configuracao. |
-| `src/logger.py` | Configura logs e decorador de execucao de ferramentas. |
+| `src/config.py` | Carrega `.env`, resolve caminhos, valida configuracao e centraliza politicas operacionais (logging, retries, timeouts e limites). |
+| `src/logger.py` | Configura logs estruturados com loguru ou fallback stdlib e decorador de execucao de ferramentas. |
 | `src/setup.py` | Gera configuracoes locais para Gemini CLI e Cursor. |
+| `src/utils.py` | Funcoes utilitarias comuns, como geracao deterministica de slugs seguros. |
 | `src/zettelbrain_lint.py` | Audita integridade do cofre. |
 | `src/zettelbrain_mcp.py` | Bootstrap do servidor MCP. |
 | `src/ingestion/article_etl.py` | Baixa e limpa artigos web com `trafilatura`. |
