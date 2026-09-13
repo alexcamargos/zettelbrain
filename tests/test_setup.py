@@ -390,10 +390,10 @@ def test_clean_environment_success(mocker: MockerFixture) -> None:
     exit_code = setup.clean_environment(mock_repo_root)
 
     assert exit_code == 0
-    # Should call rmtree twice (.gemini/ and .cursor/)
-    assert mock_rmtree.call_count == 2
-    # Should call unlink twice (.cursorrules and .cursorrules.bak)
-    assert mock_unlink.call_count == 2
+    # Should call rmtree thrice (.gemini/, .cursor/, and .agents/)
+    assert mock_rmtree.call_count == 3
+    # Should call unlink thrice (mcp_config.json, .cursorrules, and .cursorrules.bak)
+    assert mock_unlink.call_count == 3
 
 
 def test_clean_environment_empty(mocker: MockerFixture) -> None:
@@ -475,3 +475,169 @@ def test_main_uninstall_argument(mocker: MockerFixture) -> None:
 
     mock_clean.assert_called_once()
     assert excinfo.value.code == 0
+
+
+def test_format_antigravity_skill_content_adds_frontmatter() -> None:
+    """Test format_antigravity_skill_content prepends YAML frontmatter when missing.
+
+    Returns:
+        None
+
+    """
+    raw = "# /start (Briefing e Inicialização de Sessão)\n\nConteúdo da skill."
+    formatted = setup.format_antigravity_skill_content("start", raw)
+    assert formatted.startswith("---\nname: start\ndescription: >-\n")
+    assert "Briefing e inicialização de sessão" in formatted
+    assert "# /start (Briefing e Inicialização de Sessão)" in formatted
+
+
+def test_format_antigravity_skill_content_preserves_existing() -> None:
+    """Test format_antigravity_skill_content preserves existing YAML frontmatter.
+
+    Returns:
+        None
+
+    """
+    existing = "---\nname: start\ndescription: Custom description\n---\n\n# Body"
+    formatted = setup.format_antigravity_skill_content("start", existing)
+    assert formatted == existing
+
+
+def test_configure_antigravity_success(mocker: MockerFixture) -> None:
+    """Test Antigravity configuration success path with skills syncing.
+
+    Args:
+        mocker: Pytest mocker fixture.
+
+    Returns:
+        None
+
+    """
+    mock_repo_root = Path("/fake/root")
+
+    mocker.patch.object(Path, "mkdir")
+    mocker.patch.object(Path, "unlink")
+    mocker.patch.object(Path, "rename")
+
+    def exists_mock(self: Path) -> bool:
+        if self.name == "mcp_config.json":
+            return False
+        return self.name in ("skills", ".cursorrules")
+
+    mocker.patch.object(Path, "exists", exists_mock)
+
+    fake_skill_a = Path("/fake/root/skills/start.md")
+    fake_skill_b = Path("/fake/root/skills/close.md")
+    mocker.patch.object(Path, "glob", return_value=[fake_skill_a, fake_skill_b])
+    mocker.patch.object(Path, "iterdir", return_value=[])
+
+    mock_read = mocker.patch.object(Path, "read_text", return_value="fake skill content")
+    mock_write = mocker.patch.object(Path, "write_text")
+
+    exit_code = setup.configure_antigravity(mock_repo_root)
+
+    assert exit_code == 0
+    # Should write root mcp_config.json, agent mcp_config.json, and 2 skills
+    assert mock_write.call_count == 4
+    mock_read.assert_any_call(encoding="utf-8")
+    Path.rename.assert_called_once()
+
+
+def test_configure_antigravity_orphan_cleanup(mocker: MockerFixture) -> None:
+    """Test Antigravity configuration cleans up orphan skill folders.
+
+    Args:
+        mocker: Pytest mocker fixture.
+
+    Returns:
+        None
+
+    """
+    mock_repo_root = Path("/fake/root")
+
+    mocker.patch.object(Path, "mkdir")
+    mocker.patch.object(Path, "rename")
+    mock_rmtree = mocker.patch("shutil.rmtree")
+
+    def exists_mock(self: Path) -> bool:
+        return self.name in ("mcp_config.json", "skills")
+
+    mocker.patch.object(Path, "exists", exists_mock)
+
+    fake_source_skill = Path("/fake/root/skills/start.md")
+    mocker.patch.object(Path, "glob", return_value=[fake_source_skill])
+
+    active_dir = mocker.MagicMock(spec=Path)
+    active_dir.is_dir.return_value = True
+    active_dir.name = "start"
+
+    orphan_dir = mocker.MagicMock(spec=Path)
+    orphan_dir.is_dir.return_value = True
+    orphan_dir.name = "orphan_skill"
+
+    mocker.patch.object(Path, "iterdir", return_value=[active_dir, orphan_dir])
+    mocker.patch.object(Path, "read_text", return_value="content")
+    mocker.patch.object(Path, "write_text")
+
+    exit_code = setup.configure_antigravity(mock_repo_root)
+
+    assert exit_code == 0
+    mock_rmtree.assert_called_once_with(orphan_dir)
+
+
+def test_configure_antigravity_os_error(mocker: MockerFixture) -> None:
+    """Test Antigravity configuration handles OSError gracefully and returns code 1.
+
+    Args:
+        mocker: Pytest mocker fixture.
+
+    Returns:
+        None
+
+    """
+    mock_repo_root = Path("/fake/root")
+    mocker.patch.object(Path, "mkdir", side_effect=OSError("Permission denied"))
+
+    exit_code = setup.configure_antigravity(mock_repo_root)
+    assert exit_code == 1
+
+
+def test_main_antigravity_argument(mocker: MockerFixture) -> None:
+    """Test main function executes Antigravity configuration correctly.
+
+    Args:
+        mocker: Pytest mocker fixture.
+
+    Returns:
+        None
+
+    """
+    mocker.patch.object(sys, "argv", ["setup.py", "antigravity"])
+    mock_configure = mocker.patch("setup.configure_antigravity", return_value=0)
+
+    with pytest.raises(SystemExit) as excinfo:
+        setup.main()
+
+    mock_configure.assert_called_once()
+    assert excinfo.value.code == 0
+
+
+def test_main_agy_argument(mocker: MockerFixture) -> None:
+    """Test main function supports agy as an Antigravity configuration alias.
+
+    Args:
+        mocker: Pytest mocker fixture.
+
+    Returns:
+        None
+
+    """
+    mocker.patch.object(sys, "argv", ["setup.py", "agy"])
+    mock_configure = mocker.patch("setup.configure_antigravity", return_value=0)
+
+    with pytest.raises(SystemExit) as excinfo:
+        setup.main()
+
+    mock_configure.assert_called_once()
+    assert excinfo.value.code == 0
+
