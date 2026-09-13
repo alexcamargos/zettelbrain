@@ -1,7 +1,7 @@
-"""Automation utility for configuring LLM ZettelBrain for Gemini CLI or Cursor IDE.
+"""Automation utility for configuring LLM ZettelBrain for Antigravity, Gemini CLI, or Cursor.
 
-Allows switching configuration profiles seamlessly by managing .cursorrules and client settings
-for Model Context Protocol (MCP) servers.
+Allows switching configuration profiles seamlessly by managing .agents skills, .cursorrules,
+and client settings for Model Context Protocol (MCP) servers.
 """
 
 from __future__ import annotations
@@ -73,6 +73,163 @@ def bootstrap_local_workspace(repo_root: Path) -> int:
 
     except OSError as exc:
         print(f"[ERROR] Failed to bootstrap local workspace: {exc}", file=sys.stderr)
+        return 1
+
+
+SKILL_DESCRIPTIONS: dict[str, str] = {
+    "article": (
+        "Processa artigos informais da web em raw/articles/ com avaliação de procedência "
+        "e citação recuperável."
+    ),
+    "bridge": (
+        "Cruza notas semanticamente distantes para gerar atrito criativo e conexões "
+        "interdisciplinares no cofre."
+    ),
+    "close": (
+        "Encerra a sessão de pesquisa, consolida descobertas e atualiza .state/hot.md "
+        "e .state/log.md."
+    ),
+    "ghost": "Redige rascunhos acadêmicos e sínteses textuais densas a partir de notas no cofre.",
+    "lint": (
+        "Audita integridade estrutural do cofre, verifica links órfãos e regenera "
+        "zettelbrain/overview.md."
+    ),
+    "paper-intro": (
+        "Realiza triagem rápida de resumo e introdução de papers acadêmicos em raw/papers/."
+    ),
+    "paper": (
+        "Processa e ingere documentos formais e papers em raw/papers/ com extração ABNT "
+        "e suporte a PageIndex."
+    ),
+    "recall": "Busca híbrida e validação de contexto na base do ZettelBrain antes de criar notas.",
+    "research-deep": "Pesquisa lacunas conceituais e realiza buscas em bases científicas externas.",
+    "start": "Briefing e inicialização de sessão de pesquisa recuperando contexto do ZettelBrain.",
+    "trace": "Rastreia a evolução cronológica e teórica de um conceito através das notas do cofre.",
+    "visual": "Gera diagramas conceituais Mermaid, apresentações Marp e descrições visuais.",
+    "youtube": "Processa transcrições brutas do YouTube em raw/youtube/ geradas pelo ETL.",
+}
+
+
+def format_antigravity_skill_content(name: str, content: str) -> str:
+    """Ensure skill markdown content has valid YAML frontmatter for Antigravity CLI.
+
+    Args:
+        name: The unique name identifier of the skill.
+        content: The raw markdown content from the skill template.
+
+    Returns:
+        str: The markdown content starting with YAML frontmatter containing name and description.
+
+    """
+    stripped = content.strip()
+    if stripped.startswith("---"):
+        parts = stripped.split("---", 2)
+        if len(parts) >= 3 and "name:" in parts[1]:
+            return content
+
+    description = SKILL_DESCRIPTIONS.get(name, f"Skill {name} para o cofre ZettelBrain.")
+    frontmatter = f"---\nname: {name}\ndescription: >-\n  {description}\n---\n\n"
+    return frontmatter + content
+
+
+def configure_antigravity(repo_root: Path) -> int:
+    """Configure settings and skills for the Antigravity CLI client (agy).
+
+    Creates the .agents directory and mcp_config.json if missing, syncs all skills
+    from the root skills/ folder into .agents/skills/<name>/SKILL.md with valid YAML frontmatter,
+    and deactivates Cursor rules (.cursorrules) to avoid configuration conflicts.
+
+    Args:
+        repo_root: The root path of the repository.
+
+    Returns:
+        int: The exit code (0 for success, 1 for failure).
+
+    """
+    print("[-] Configuring the Antigravity CLI environment...")
+
+    try:
+        agents_dir = repo_root / ".agents"
+        agents_dir.mkdir(parents=True, exist_ok=True)
+        agents_skills_dir = agents_dir / "skills"
+        agents_skills_dir.mkdir(parents=True, exist_ok=True)
+
+        default_mcp = {
+            "mcpServers": {
+                "ZettelBrain": {
+                    "command": "uv",
+                    "args": ["run", "src/mcp/server.py"],
+                    "timeout": 600000,
+                }
+            }
+        }
+
+        root_mcp = repo_root / "mcp_config.json"
+        if not root_mcp.exists():
+            root_mcp.write_text(
+                json.dumps(default_mcp, indent=2, ensure_ascii=False),
+                encoding="utf-8",
+            )
+            print(f"[+] MCP config file created at: {root_mcp.relative_to(repo_root)}")
+        else:
+            print(f"[~] MCP config file already exists at: {root_mcp.relative_to(repo_root)}")
+
+        agent_mcp = agents_dir / "mcp_config.json"
+        if not agent_mcp.exists():
+            agent_mcp.write_text(
+                json.dumps(default_mcp, indent=2, ensure_ascii=False),
+                encoding="utf-8",
+            )
+
+        source_skills_dir = repo_root / "skills"
+        if source_skills_dir.exists():
+            source_files = list(source_skills_dir.glob("*.md"))
+            copied_count = 0
+            for src_file in source_files:
+                skill_name = src_file.stem
+                target_folder = agents_skills_dir / skill_name
+                target_folder.mkdir(parents=True, exist_ok=True)
+                target_file = target_folder / "SKILL.md"
+
+                raw_content = src_file.read_text(encoding="utf-8")
+                formatted_content = format_antigravity_skill_content(skill_name, raw_content)
+                target_file.write_text(formatted_content, encoding="utf-8")
+                copied_count += 1
+
+            rel_skills_dir = agents_skills_dir.relative_to(repo_root)
+            print(f"[+] Synchronized {copied_count} skills to {rel_skills_dir}/<name>/SKILL.md")
+
+            valid_skill_names = {f.stem for f in source_files}
+            removed_count = 0
+            for existing_dir in agents_skills_dir.iterdir():
+                if existing_dir.is_dir() and existing_dir.name not in valid_skill_names:
+                    shutil.rmtree(existing_dir)
+                    removed_count += 1
+            if removed_count > 0:
+                print(
+                    "[+] Removed "
+                    f"{removed_count} orphan skills from {agents_skills_dir.relative_to(repo_root)}"
+                )
+        else:
+            print("[!] Warning: master skills folder not found at the project root.")
+
+        cursorrules = repo_root / ".cursorrules"
+        if cursorrules.exists():
+            cursorrules_bak = repo_root / ".cursorrules.bak"
+            if cursorrules_bak.exists():
+                cursorrules_bak.unlink()
+            cursorrules.rename(cursorrules_bak)
+            print(f"[+] Cursor rules disabled: {cursorrules.name} -> {cursorrules_bak.name}")
+
+        print("\n[OK] Antigravity CLI environment configured successfully!")
+        print("    -> Run 'agy' in your terminal and type / to browse slash commands.")
+        return 0
+
+    except OSError as exc:
+        print(
+            f"[ERROR] Failed to configure the Antigravity CLI environment: {exc}",
+            file=sys.stderr,
+        )
         return 1
 
 
@@ -272,6 +429,8 @@ def clean_environment(repo_root: Path) -> int:
 
     gemini_dir = repo_root / ".gemini"
     cursor_dir = repo_root / ".cursor"
+    agents_dir = repo_root / ".agents"
+    mcp_config = repo_root / "mcp_config.json"
     cursorrules = repo_root / ".cursorrules"
     cursorrules_bak = repo_root / ".cursorrules.bak"
 
@@ -287,6 +446,16 @@ def clean_environment(repo_root: Path) -> int:
         if cursor_dir.exists():
             shutil.rmtree(cursor_dir)
             cleaned.append(f"{cursor_dir.name}/")
+
+        # Delete .agents directory
+        if agents_dir.exists():
+            shutil.rmtree(agents_dir)
+            cleaned.append(f"{agents_dir.name}/")
+
+        # Delete mcp_config.json
+        if mcp_config.exists():
+            mcp_config.unlink()
+            cleaned.append(mcp_config.name)
 
         # Delete .cursorrules
         if cursorrules.exists():
@@ -323,23 +492,29 @@ def main() -> None:
     repo_root = get_repo_root()
     args = sys.argv[1:]
 
+    usage_msg = "Uso: uv run install [bootstrap|local|antigravity|agy|gemini|cursor|clean]"
+
     if not args:
         print("Erro: Nenhum provedor especificado.", file=sys.stderr)
-        print("Uso: uv run install [bootstrap|local|gemini|cursor|clean]", file=sys.stderr)
+        print(usage_msg, file=sys.stderr)
         sys.exit(1)
 
     provider = args[0].lower().strip()
     if provider in ("bootstrap", "local"):
         sys.exit(bootstrap_local_workspace(repo_root))
+    elif provider in ("antigravity", "agy"):
+        sys.exit(configure_antigravity(repo_root))
     elif provider == "gemini":
-        sys.exit(configure_gemini(repo_root))
+        exit_code_agy = configure_antigravity(repo_root)
+        exit_code_gemini = configure_gemini(repo_root)
+        sys.exit(0 if exit_code_agy == 0 and exit_code_gemini == 0 else 1)
     elif provider == "cursor":
         sys.exit(configure_cursor(repo_root))
     elif provider in ("clean", "uninstall"):
         sys.exit(clean_environment(repo_root))
     else:
         print(f"Erro: Provedor '{provider}' desconhecido.", file=sys.stderr)
-        print("Uso: uv run install [bootstrap|local|gemini|cursor|clean]", file=sys.stderr)
+        print(usage_msg, file=sys.stderr)
         sys.exit(1)
 
 
