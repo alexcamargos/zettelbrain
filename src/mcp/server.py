@@ -49,7 +49,12 @@ from logger import configure_logging, log_skill_execution
 from zettelbrain_lint import run_lint_logic
 
 settings = load_settings()
-configure_logging(settings.logs_path)
+configure_logging(
+    settings.logs_path,
+    level=settings.log_level,
+    rotation=settings.log_rotation,
+    retention=settings.log_retention,
+)
 
 
 @log_skill_execution
@@ -73,6 +78,15 @@ def health() -> dict[str, Any]:
         "embedding_model_name": settings.embedding_model_name,
         "embedding_endpoint": settings.embedding_endpoint,
         "embedding_index_path": str(settings.embedding_index_path),
+        "log_level": settings.log_level,
+        "log_rotation": settings.log_rotation,
+        "log_retention": settings.log_retention,
+        "article_fetch_max_attempts": settings.article_fetch_max_attempts,
+        "article_fetch_retry_delay_seconds": settings.article_fetch_retry_delay_seconds,
+        "embedding_timeout_seconds": settings.embedding_timeout_seconds,
+        "qmd_timeout_seconds": settings.qmd_timeout_seconds,
+        "pageindex_timeout_seconds": settings.pageindex_timeout_seconds,
+        "search_default_limit": settings.search_default_limit,
     }
 
 
@@ -94,6 +108,7 @@ async def search_zettelbrain(query: str, limit: int = 8) -> list[dict[str, Any]]
             query,
             limit=limit,
             qmd_command=settings.qmd_command,
+            timeout_seconds=settings.qmd_timeout_seconds,
         )
         if primary_results and primary_results[0].engine == "qmd":
             results = primary_results
@@ -107,6 +122,7 @@ async def search_zettelbrain(query: str, limit: int = 8) -> list[dict[str, Any]]
                 dimensions=settings.embedding_dimensions,
                 model_name=settings.embedding_model_name,
                 endpoint=settings.embedding_endpoint,
+                timeout_seconds=settings.embedding_timeout_seconds,
             )
             results = merge_search_results(
                 primary_results,
@@ -176,6 +192,7 @@ async def index_zettelbrain_embeddings() -> dict[str, Any]:
             dimensions=settings.embedding_dimensions,
             model_name=settings.embedding_model_name,
             endpoint=settings.embedding_endpoint,
+            timeout_seconds=settings.embedding_timeout_seconds,
         )
         return {
             "provider": index["provider"],
@@ -213,6 +230,7 @@ async def semantic_search_zettelbrain(query: str, limit: int = 8) -> list[dict[s
                 dimensions=settings.embedding_dimensions,
                 model_name=settings.embedding_model_name,
                 endpoint=settings.embedding_endpoint,
+                timeout_seconds=settings.embedding_timeout_seconds,
             )
         ]
         
@@ -243,6 +261,7 @@ async def suggest_zettelbrain_links(relative_path: str, limit: int = 5) -> list[
                 dimensions=settings.embedding_dimensions,
                 model_name=settings.embedding_model_name,
                 endpoint=settings.embedding_endpoint,
+                timeout_seconds=settings.embedding_timeout_seconds,
             )
         ]
         
@@ -485,6 +504,7 @@ async def index_pdf_cache(relative_path: str) -> dict[str, Any]:
             settings.vault_path / ".pageindex",
             relative_path,
             pageindex_command=settings.pageindex_command,
+            timeout_seconds=settings.pageindex_timeout_seconds,
         )
         
     return await anyio.to_thread.run_sync(_do_index_cache)
