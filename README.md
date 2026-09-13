@@ -28,7 +28,6 @@ Documentacao de consulta para terceiros:
 - [Arquitetura e estrutura do projeto](docs/arquitetura.md)
 - [Configuracao e operacao local](docs/configuracao.md)
 - [Ferramentas MCP](docs/mcp-tools.md)
-- [Auditoria de alinhamento da documentacao](docs/auditoria-documentacao.md)
 
 ## Inicio rapido
 
@@ -96,7 +95,9 @@ uv run install clean
 |-- skills/
 |-- src/
 |   |-- config.py
+|   |-- logger.py
 |   |-- setup.py
+|   |-- utils.py
 |   |-- zettelbrain_lint.py
 |   |-- zettelbrain_mcp.py
 |   |-- ingestion/
