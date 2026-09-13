@@ -143,6 +143,7 @@ def build_embedding_index(
     dimensions: int,
     model_name: str,
     endpoint: str | None,
+    timeout_seconds: int = DEFAULT_TIMEOUT_SECONDS,
 ) -> dict[str, Any]:
     """Build and persist a local embedding index for Markdown files under root.
 
@@ -153,6 +154,7 @@ def build_embedding_index(
         dimensions: Target dimensions size.
         model_name: Name of the default embedding model.
         endpoint: Endpoint URL for API-based providers.
+        timeout_seconds: Timeout in seconds for network embedding calls. Defaults to 20.
 
     Returns:
         dict[str, Any]: Payload dictionary stored in the index path.
@@ -163,6 +165,7 @@ def build_embedding_index(
         model_name=model_name,
         endpoint=endpoint,
         dimensions=dimensions,
+        timeout_seconds=timeout_seconds,
     )
     documents: list[dict[str, Any]] = []
     for path in _iter_indexable_markdown(root):
@@ -226,6 +229,7 @@ def semantic_search(
     model_name: str,
     endpoint: str | None,
     rebuild_if_missing: bool = True,
+    timeout_seconds: int = DEFAULT_TIMEOUT_SECONDS,
 ) -> list[EmbeddingSearchResult]:
     """Search the local embedding index using cosine similarity.
 
@@ -239,6 +243,7 @@ def semantic_search(
         model_name: Name of the default embedding model.
         endpoint: Endpoint URL for API-based providers.
         rebuild_if_missing: Automatically build index if file does not exist.
+        timeout_seconds: Timeout in seconds for embedding calls. Defaults to 20.
 
     Returns:
         list[EmbeddingSearchResult]: Sorted list of search results.
@@ -253,6 +258,7 @@ def semantic_search(
             dimensions=dimensions,
             model_name=model_name,
             endpoint=endpoint,
+            timeout_seconds=timeout_seconds,
         )
     if not index:
         return []
@@ -275,6 +281,7 @@ def semantic_search(
         model_name=model_name,
         endpoint=endpoint,
         dimensions=index_dimensions,
+        timeout_seconds=timeout_seconds,
     )
     if not any(query_embedding):
         return []
@@ -315,6 +322,7 @@ def suggest_note_links(
     model_name: str,
     endpoint: str | None,
     rebuild_if_missing: bool = True,
+    timeout_seconds: int = DEFAULT_TIMEOUT_SECONDS,
 ) -> list[EmbeddingSearchResult]:
     """Suggest semantic links for a specific note, excluding existing links.
 
@@ -328,6 +336,7 @@ def suggest_note_links(
         model_name: Name of the default embedding model.
         endpoint: Endpoint URL for API-based providers.
         rebuild_if_missing: Automatically build index if file does not exist.
+        timeout_seconds: Timeout in seconds for embedding calls. Defaults to 20.
 
     Returns:
         list[EmbeddingSearchResult]: Sorted list of search results not currently linked.
@@ -356,6 +365,7 @@ def suggest_note_links(
             dimensions=dimensions,
             model_name=model_name,
             endpoint=endpoint,
+            timeout_seconds=timeout_seconds,
         )
     if not index:
         return []
@@ -379,6 +389,7 @@ def suggest_note_links(
         model_name=model_name,
         endpoint=endpoint,
         dimensions=index_dimensions,
+        timeout_seconds=timeout_seconds,
     )
 
     if not any(query_embedding):
@@ -497,6 +508,7 @@ def embed_text(
     model_name: str,
     endpoint: str | None,
     dimensions: int,
+    timeout_seconds: int = DEFAULT_TIMEOUT_SECONDS,
 ) -> list[float]:
     """Embed text using the configured provider.
 
@@ -506,6 +518,7 @@ def embed_text(
         model_name: Model identifier name.
         endpoint: Endpoint URL for API-based providers.
         dimensions: Target dimensions size.
+        timeout_seconds: Timeout in seconds for embedding calls. Defaults to 20.
 
     Returns:
         list[float]: Normalized vector representing the text embedding.
@@ -517,7 +530,14 @@ def embed_text(
     if provider == "ollama":
         if not endpoint:
             raise RuntimeError("EMBEDDING_ENDPOINT is not configured for the ollama provider.")
-        return _normalize(ollama_embedding(text, endpoint=endpoint, model_name=model_name))
+        return _normalize(
+            ollama_embedding(
+                text,
+                endpoint=endpoint,
+                model_name=model_name,
+                timeout_seconds=timeout_seconds,
+            )
+        )
     return hashing_embedding(text, dimensions=dimensions)
 
 
@@ -640,6 +660,7 @@ class OllamaEmbedder(Embedder):
         endpoint: str,
         dimensions: int,
         fallback_provider: str | None = None,
+        timeout_seconds: int = DEFAULT_TIMEOUT_SECONDS,
     ) -> None:
         """Initialize OllamaEmbedder.
 
@@ -648,6 +669,7 @@ class OllamaEmbedder(Embedder):
             endpoint: Endpoint URL for Ollama service.
             dimensions: Vector space dimensionality of the embeddings.
             fallback_provider: Optional fallback embedding provider string.
+            timeout_seconds: Timeout in seconds for embedding requests.
 
         """
         super().__init__(
@@ -657,6 +679,7 @@ class OllamaEmbedder(Embedder):
             endpoint=endpoint,
             dimensions=dimensions,
         )
+        self.timeout_seconds = timeout_seconds
 
     def embed(self, text: str) -> list[float]:
         """Request an embedding vector from the local Ollama endpoint.
@@ -676,6 +699,7 @@ class OllamaEmbedder(Embedder):
                 text,
                 endpoint=self.endpoint or "",
                 model_name=self.model_name,
+                timeout_seconds=self.timeout_seconds,
             )
         )
 
@@ -690,6 +714,7 @@ class EmbedderFactory:
         model_name: str,
         endpoint: str | None,
         dimensions: int,
+        timeout_seconds: int = DEFAULT_TIMEOUT_SECONDS,
     ) -> Embedder:
         """Resolve and return the appropriate Embedder implementation.
 
@@ -701,6 +726,7 @@ class EmbedderFactory:
             model_name: Name of the embedding model.
             endpoint: Endpoint URL for API-based embedding providers.
             dimensions: Vector space dimensionality of the embeddings.
+            timeout_seconds: Timeout in seconds for remote embedding requests. Defaults to 20.
 
         Returns:
             Embedder: An initialized Embedder instance.
@@ -725,6 +751,7 @@ class EmbedderFactory:
                 "healthcheck",
                 endpoint=endpoint,
                 model_name=model_name,
+                timeout_seconds=timeout_seconds,
             )
         except RuntimeError:
             get_logger().warning(
@@ -743,6 +770,7 @@ class EmbedderFactory:
             model_name=model_name,
             endpoint=endpoint,
             dimensions=dimensions,
+            timeout_seconds=timeout_seconds,
         )
 
 
@@ -752,6 +780,7 @@ def _resolve_embedder(
     model_name: str,
     endpoint: str | None,
     dimensions: int,
+    timeout_seconds: int = DEFAULT_TIMEOUT_SECONDS,
 ) -> Embedder:
     """Resolve and return an Embedder implementation using the EmbedderFactory.
 
@@ -760,6 +789,7 @@ def _resolve_embedder(
         model_name: Name of the embedding model.
         endpoint: Endpoint URL for API-based embedding providers.
         dimensions: Vector space dimensionality of the embeddings.
+        timeout_seconds: Timeout in seconds for embedding requests. Defaults to 20.
 
     Returns:
         Embedder: An initialized Embedder instance.
@@ -770,6 +800,7 @@ def _resolve_embedder(
         model_name=model_name,
         endpoint=endpoint,
         dimensions=dimensions,
+        timeout_seconds=timeout_seconds,
     )
 
 
