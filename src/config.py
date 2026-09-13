@@ -42,6 +42,15 @@ class Settings(BaseSettings):
         embedding_endpoint: Local embedding endpoint URL, when provider needs one.
         embedding_index_path: Path to the local embedding index JSON file.
         embedding_dimensions: Number of dimensions in the local embedding vector.
+        log_level: Default logging severity level.
+        log_rotation: Loguru file rotation rule.
+        log_retention: Loguru file retention rule.
+        article_fetch_max_attempts: Maximum attempts when fetching web articles.
+        article_fetch_retry_delay_seconds: Delay between failed article download attempts.
+        embedding_timeout_seconds: Timeout in seconds for embedding API requests.
+        qmd_timeout_seconds: Timeout in seconds for external qmd search command.
+        pageindex_timeout_seconds: Timeout in seconds for external PageIndex command.
+        search_default_limit: Default max results limit for ZettelBrain searches.
 
     """
 
@@ -74,6 +83,23 @@ class Settings(BaseSettings):
         default=Path(".state/embeddings_index.json"), alias="EMBEDDING_INDEX_PATH"
     )
     embedding_dimensions: int = Field(default=256, alias="EMBEDDING_DIMENSIONS", gt=0)
+    log_level: str = Field(default="INFO", alias="LOG_LEVEL")
+    log_rotation: str = Field(default="10 MB", alias="LOG_ROTATION")
+    log_retention: str = Field(default="14 days", alias="LOG_RETENTION")
+    article_fetch_max_attempts: int = Field(
+        default=2, alias="ARTICLE_FETCH_MAX_ATTEMPTS", gt=0
+    )
+    article_fetch_retry_delay_seconds: int = Field(
+        default=30, alias="ARTICLE_FETCH_RETRY_DELAY_SECONDS", ge=0
+    )
+    embedding_timeout_seconds: int = Field(
+        default=20, alias="EMBEDDING_TIMEOUT_SECONDS", gt=0
+    )
+    qmd_timeout_seconds: int = Field(default=20, alias="QMD_TIMEOUT_SECONDS", gt=0)
+    pageindex_timeout_seconds: int = Field(
+        default=120, alias="PAGEINDEX_TIMEOUT_SECONDS", gt=0
+    )
+    search_default_limit: int = Field(default=8, alias="SEARCH_DEFAULT_LIMIT", gt=0)
 
     @model_validator(mode="after")
     def resolve_paths_and_validate(self) -> Settings:
@@ -123,12 +149,20 @@ class Settings(BaseSettings):
 
         # 4. Clean strings
         self.embedding_provider = self.embedding_provider.strip().lower()
+        self.log_level = self.log_level.strip().upper()
 
         # 5. Validate provider
         if self.embedding_provider not in {"hashing", "ollama"}:
             raise ValueError("EMBEDDING_PROVIDER deve ser 'hashing' ou 'ollama'.")
         if self.embedding_provider == "ollama" and not self.embedding_endpoint:
             raise ValueError("EMBEDDING_ENDPOINT e obrigatorio para EMBEDDING_PROVIDER=ollama.")
+
+        # 6. Validate log level
+        valid_log_levels = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
+        if self.log_level not in valid_log_levels:
+            raise ValueError(
+                f"LOG_LEVEL deve ser um dos seguintes: {', '.join(sorted(valid_log_levels))}."
+            )
 
         return self
 
