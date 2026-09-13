@@ -114,11 +114,12 @@ flowchart TD
 ### Setup de clientes
 
 - Codigo: [../src/setup.py](../src/setup.py)
-- CLI: `uv run install bootstrap`, `uv run install gemini`, `uv run install cursor`, `uv run install clean`.
+- CLI: `uv run install bootstrap`, `uv run install antigravity`, `uv run install agy`, `uv run install gemini`, `uv run install cursor`, `uv run install clean`.
 - `bootstrap` ou `local`: cria a estrutura local para `raw/`, `zettelbrain/`, `logs/`, `.state/` e `.pageindex/`; em `.state/`, apenas caches e historico gerados sao ignorados pelo Git.
-- `gemini`: cria `.gemini/settings.json` e sincroniza `skills/`.
+- `antigravity` ou `agy`: cria `.agents/skills/<name>/SKILL.md` com YAML frontmatter para autocompletar no Antigravity CLI e gera `mcp_config.json`.
+- `gemini`: configura o Antigravity CLI e o cliente legado Gemini CLI (`.gemini/settings.json` e `.gemini/skills/`).
 - `cursor`: cria `.cursor/mcp.json` e compila [ZETTELBRAIN.md](../ZETTELBRAIN.md) com `skills/`.
-- `clean`: remove configuracoes locais geradas.
+- `clean`: remove configuracoes locais geradas (`.agents/`, `.gemini/`, `.cursor/`, etc.).
 
 ### ETL de artigos web
 
