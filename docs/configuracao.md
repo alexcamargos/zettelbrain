@@ -67,6 +67,15 @@ As variaveis sao carregadas de `.env` quando o arquivo existe. `.env.example` do
 | `EMBEDDING_ENDPOINT` | `http://localhost:11434/api/embeddings` | Endpoint Ollama. |
 | `EMBEDDING_INDEX_PATH` | `.state/embeddings_index.json` | Cache de embeddings. |
 | `EMBEDDING_DIMENSIONS` | `256` | Dimensoes do embedding hashing. |
+| `LOG_LEVEL` | `INFO` | Nivel minimo de severidade de log (DEBUG, INFO, etc.). |
+| `LOG_ROTATION` | `10 MB` | Politica de rotacao de arquivos de log do loguru. |
+| `LOG_RETENTION` | `14 days` | Politica de retencao/expiracao dos arquivos de log. |
+| `ARTICLE_FETCH_MAX_ATTEMPTS` | `2` | Tentativas maximas de download de artigo no ETL web. |
+| `ARTICLE_FETCH_RETRY_DELAY_SECONDS` | `30` | Intervalo em segundos entre tentativas com falha. |
+| `EMBEDDING_TIMEOUT_SECONDS` | `20` | Timeout em segundos para chamadas a API de embeddings. |
+| `QMD_TIMEOUT_SECONDS` | `20` | Timeout em segundos para execucao do comando qmd. |
+| `PAGEINDEX_TIMEOUT_SECONDS` | `120` | Timeout em segundos para execucao do PageIndex. |
+| `SEARCH_DEFAULT_LIMIT` | `8` | Limite padrao de resultados nas buscas do ZettelBrain. |
 
 ## Validacoes
 
