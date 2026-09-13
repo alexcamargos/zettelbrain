@@ -47,3 +47,41 @@ def test_log_skill_execution_uses_stdlib_placeholders_when_loguru_is_unavailable
     )
     assert fake_logger.records[1][0] == "info"
     assert fake_logger.records[1][1] == "skill_end name=%s elapsed_ms=%.2f"
+
+
+def test_configure_logging_custom_parameters(tmp_path: Any) -> None:
+    """Tests configuring logger with custom level, rotation and retention.
+
+    Args:
+        tmp_path: Pytest temporary directory fixture.
+
+    Returns:
+        None
+
+    """
+    logger_instance = logger_module.configure_logging(
+        tmp_path,
+        level="DEBUG",
+        rotation="5 MB",
+        retention="7 days",
+    )
+
+    assert logger_instance is not None
+    assert (tmp_path / "zettelbrain.log").exists()
+
+
+def test_configure_logging_stdlib_level(tmp_path: Any, monkeypatch: Any) -> None:
+    """Tests stdlib fallback respects the configured log level.
+
+    Args:
+        tmp_path: Pytest temporary directory fixture.
+        monkeypatch: Pytest monkeypatch utility fixture.
+
+    Returns:
+        None
+
+    """
+    monkeypatch.setattr(logger_module, "_logger", None)
+    logger_instance = logger_module.configure_logging(tmp_path, level="WARNING")
+
+    assert logger_instance.level == logger_module.logging.WARNING
