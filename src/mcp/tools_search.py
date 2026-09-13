@@ -15,6 +15,9 @@ from pathlib import Path
 
 from tools_command import split_command
 
+DEFAULT_SEARCH_LIMIT: int = 8
+DEFAULT_QMD_TIMEOUT_SECONDS: int = 20
+
 
 @dataclass(frozen=True)
 class SearchResult:
@@ -48,8 +51,9 @@ def hybrid_search(
     root: Path,
     query: str,
     *,
-    limit: int = 8,
+    limit: int = DEFAULT_SEARCH_LIMIT,
     qmd_command: str | None = "qmd",
+    timeout_seconds: int = DEFAULT_QMD_TIMEOUT_SECONDS,
 ) -> list[SearchResult]:
     """Execute hybrid search using qmd when available, with a lexical fallback.
 
@@ -58,13 +62,20 @@ def hybrid_search(
         query: Space-separated search terms to query.
         limit: Max search hits to return. Defaults to 8.
         qmd_command: Path/name of the qmd executable. Defaults to "qmd".
+        timeout_seconds: Timeout in seconds when running qmd. Defaults to 20.
 
     Returns:
         list[SearchResult]: Ranked list of SearchResult matches.
 
     """
     if qmd_command:
-        qmd_results = qmd_search(root, query, limit=limit, qmd_command=qmd_command)
+        qmd_results = qmd_search(
+            root,
+            query,
+            limit=limit,
+            qmd_command=qmd_command,
+            timeout_seconds=timeout_seconds,
+        )
         if qmd_results:
             return qmd_results
     return lexical_search(root, query, limit=limit)
@@ -184,8 +195,9 @@ def qmd_search(
     root: Path,
     query: str,
     *,
-    limit: int = 8,
+    limit: int = DEFAULT_SEARCH_LIMIT,
     qmd_command: str = "qmd",
+    timeout_seconds: int = DEFAULT_QMD_TIMEOUT_SECONDS,
 ) -> list[SearchResult]:
     """Invoke the external `qmd` CLI tool for semantic vector-based search.
 
@@ -194,6 +206,7 @@ def qmd_search(
         query: Search query text.
         limit: Maximum results to return. Defaults to 8.
         qmd_command: Command prefix to execute qmd. Defaults to "qmd".
+        timeout_seconds: Subprocess execution timeout in seconds. Defaults to 20.
 
     Returns:
         list[SearchResult]: Ranked list of SearchResult matches or empty list on error.
@@ -218,7 +231,7 @@ def qmd_search(
             capture_output=True,
             cwd=root,
             text=True,
-            timeout=20,
+            timeout=timeout_seconds,
         )
     except (OSError, subprocess.TimeoutExpired):
         return []
