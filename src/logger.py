@@ -24,11 +24,20 @@ except ImportError:  # pragma: no cover - exercised only without optional depend
 F = TypeVar("F", bound=Callable[..., Any])
 
 
-def configure_logging(logs_path: Path) -> Any:
+def configure_logging(
+    logs_path: Path,
+    *,
+    level: str = "INFO",
+    rotation: str = "10 MB",
+    retention: str = "14 days",
+) -> Any:
     """Configure structured logs with loguru when available, otherwise stdlib logging.
 
     Args:
         logs_path: Path to the directory where log files should be created.
+        level: Logging severity level (e.g., 'DEBUG', 'INFO', 'WARNING'). Defaults to 'INFO'.
+        rotation: Log file rotation condition. Defaults to '10 MB'.
+        retention: Log file retention duration. Defaults to '14 days'.
 
     Returns:
         Any: A loguru logger instance or a standard logging Logger instance.
@@ -36,33 +45,40 @@ def configure_logging(logs_path: Path) -> Any:
     """
     logs_path.mkdir(parents=True, exist_ok=True)
     log_file = logs_path / "zettelbrain.log"
+    normalized_level = level.upper()
 
     if _logger is not None:
         _logger.remove()
         _logger.add(
             sink=sys.stderr,
             colorize=True,
+            level=normalized_level,
             format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level}</level> | {message}",
         )
         _logger.add(
             log_file,
-            rotation="10 MB",
-            retention="14 days",
+            level=normalized_level,
+            rotation=rotation,
+            retention=retention,
             encoding="utf-8",
             enqueue=True,
             format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}",
         )
         return _logger
 
+    numeric_level = getattr(logging, normalized_level, logging.INFO)
     logging.basicConfig(
-        level=logging.INFO,
+        level=numeric_level,
         format="%(asctime)s | %(levelname)s | %(message)s",
         handlers=[
             logging.FileHandler(log_file, encoding="utf-8"),
             logging.StreamHandler(),
         ],
+        force=True,
     )
-    return logging.getLogger("zettelbrain")
+    logger = logging.getLogger("zettelbrain")
+    logger.setLevel(numeric_level)
+    return logger
 
 
 def get_logger() -> Any:
