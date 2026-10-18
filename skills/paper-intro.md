@@ -32,7 +32,7 @@ Se o usuário aprovar a criação das notas preliminares, gere os arquivos aplic
 **Regras estritas para a geração do texto das notas:**
 - É terminantemente proibido o uso de listas ou marcadores (bullet points) no corpo das notas.
 - Toda nota deve iniciar com um título Markdown (`# Título da nota`) imediatamente após o frontmatter YAML.
-- O texto de cada nota deve ser contínuo e estruturado logicamente em parágrafos de prosa, sem inserir rótulos literais como `Introdução.` `Contexto.` `Fechamento.` antes dos parágrafos. Não imponha três parágrafos como padrão para a nota de literatura; quando o resumo e a introdução forem conceitualmente ricos, escreva o suficiente para cobrir problema de pesquisa, conceitos iniciais, justificativa, lacunas e potencial de conexão com o cofre.
+- O texto de cada nota deve ser contínuo e estruturado logicamente em parágrafos de prosa, sem inserir rótulos literais de seção antes dos parágrafos. Não imponha três parágrafos como padrão para a nota de literatura; quando o resumo e a introdução forem conceitualmente ricos, escreva o suficiente para cobrir problema de pesquisa, conceitos iniciais, justificativa, lacunas e potencial de conexão com o cofre.
 - Utilize **negrito** exclusivamente para destacar as palavras-chave e conceitos centrais, facilitando a recuperação da informação.
 - Não utilize travessões. Empregue vírgulas ou construa períodos curtos e diretos para explicações.
 - Não utilize emojis.
