@@ -18,15 +18,13 @@ Acionado quando o usuário disser `gemini "Execute a skill /trace sobre [conceit
 ### Etapa 2: Elaboração do Dossiê Evolutivo (Aplicação Rigorosa de Estilo)
 Gere um dossiê analítico consolidando os achados. A redação deste documento DEVE obedecer integralmente às **Regras Globais de Estilo**:
 - É terminantemente proibido o uso de listas ou marcadores (bullet points).
-- Estruture a redação em parágrafos contínuos, sendo terminantemente proibido gravar os rótulos literais "Introdução", "Contexto" ou "Fechamento" no corpo do texto:
-  - O **primeiro parágrafo** deve apresentar o conceito rastreado e o período temporal analisado;
-  - O **segundo parágrafo** deve trazer a narrativa cronológica detalhando como o conceito foi tratado pelos primeiros autores, como sofreu mutações e quais divergências surgiram com novas literaturas;
-  - O **terceiro parágrafo** (conclusão) deve sintetizar o estado da arte atual ou o consenso de mercado sobre o tema.
+- Desenvolva a redação em parágrafos contínuos de prosa, sem gravar rótulos artificiais de seção e sem impor um número fixo de parágrafos, apresentando o conceito rastreado e o recorte temporal analisado, reconstruindo a narrativa cronológica de como o conceito foi tratado pelos primeiros autores, suas mutações e divergências na literatura, e sintetizando o entendimento atual sobre o tema.
 - Aplique a Técnica Feynman com foco em clareza lógica para executivos seniores; traduza o peso matemático ou estatístico da evolução do conceito sem perder a profundidade analítica.
 - Aplique **negrito** exclusivamente para destacar constructos teóricos, variáveis, métricas, autores e anos-chave.
 - Não utilize travessões. A fluidez da explicação deve ser garantida pelo uso de vírgulas e períodos curtos e diretos.
 - Não utilize emojis.
 - Todo artigo ou nota mencionada na evolução histórica deve ser devidamente linkada no corpo do texto utilizando a sintaxe `[[nome-do-arquivo]]`.
+- Aplique obrigatoriamente a camada de polimento da skill `/humanizer`: elimine clichês de LLM, gerúndios vazios de cauda e falsos contrastes, mantendo parágrafos de até 4 frases e cadência variada (burstiness) para alta legibilidade humana.
 
 ### Etapa 3: Salvamento e Indexação
 1. Salve o dossiê evolutivo completo em um novo arquivo no diretório `zettelbrain/syntheses/trace-[conceito].md`.
