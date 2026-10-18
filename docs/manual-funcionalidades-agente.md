@@ -85,8 +85,8 @@ flowchart TD
 ### `/research-deep`
 
 - Regras: [../skills/research-deep.md](../skills/research-deep.md)
-- Pesquisa lacunas externas e salva relatorios brutos em `raw/articles/`.
-- Os relatorios devem passar por `/article` antes de entrar no cofre.
+- Pesquisa lacunas externas e salva relatorios de recomendacao em `zettelbrain/drafts/`.
+- As fontes primarias selecionadas devem ser baixadas para `raw/papers/` e processadas por `/paper`.
 
 ## Skills de producao e manutencao
 
@@ -95,6 +95,19 @@ flowchart TD
 - Regras: [../skills/ghost.md](../skills/ghost.md)
 - Redige rascunhos academicos e sinteses complexas com base em notas existentes.
 - Grava em `zettelbrain/drafts/`.
+
+### `/fact-check`
+
+- Regras: [../skills/fact-check.md](../skills/fact-check.md)
+- Auditoria adversarial de fatos, números, datas, citações e coerência lógica contra fontes primárias e o cofre.
+- Aplica auto-correção (*auto-fix*) em falhas objetivas (S1, S2, S4, S6) e submete *deal breakers* conceituais (S3, S5) à aprovação humana.
+- Atua sob demanda direta e como camada canônica de validação factual pré-humanização no pipeline de produção.
+
+### `/humanizer`
+
+- Regras: [../skills/humanizer.md](../skills/humanizer.md)
+- Elimina vicios sintaticos de LLMs, travessoes explicativos, gerundios de cauda e cliches lexicais.
+- Atua como skill autonoma sob demanda (para revisar notas ou textos existentes) e como camada obrigatoria de polimento final para qualquer texto dissertativo gerado para o cofre.
 
 ### `/visual`
 
