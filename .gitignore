@@ -57,9 +57,11 @@ zettelbrain/
 .venv-codex/
 .uv-cache/
 
-# Configuracoes locais geradas por `uv run install gemini|cursor`.
+# Configuracoes locais geradas por `uv run install gemini|cursor|antigravity`.
 .gemini/
 .cursor/
+.agents/
+mcp_config.json
 .cursorrules
 .cursorrules.bak
 
