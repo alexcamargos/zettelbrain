@@ -25,6 +25,19 @@ from logger import log_skill_execution
 from utils import slugify
 
 FRONTMATTER_PATTERN = re.compile(r"\A---[ \t]*\r?\n(.*?)\r?\n---[ \t]*(?:\r?\n|$)", re.DOTALL)
+FENCED_CODE_BLOCK_PATTERN = re.compile(r"```.*?```", re.DOTALL)
+H1_TITLE_PATTERN = re.compile(r"(?m)^#\s+\S+")
+BULLET_POINT_PATTERN = re.compile(r"(?m)^[ \t]*(?:[-*+]|\d+\.)\s+\S+")
+EM_DASH_PATTERN = re.compile(r"—|\s–\s")
+AI_SECTION_LABEL_PATTERN = re.compile(
+    r"(?im)^[ \t]*(?:\*\*)?(?:introdu[cç][aã]o|contexto|desenvolvimento|fechamento|conclus[aã]o)"
+    r"(?:\*\*)?\s*[:.—-]"
+)
+AI_CLICHE_PATTERN = re.compile(
+    r"(?i)\b(?:ademais|outrossim|destarte|em suma|por fim,\s*conclui-se|portanto,\s*conclui-se|"
+    r"nesse sentido|sob essa [oó]tica|sob a [eé]gide|vale ressaltar|importa destacar|"
+    r"cabe salientar|no cen[aá]rio contempor[aâ]neo)\b"
+)
 
 
 @dataclass
@@ -481,6 +494,84 @@ class ZettelLinter:
                 terms.add(cleaned)
         return sorted(list(terms))
 
+    def _validate_note_style(self, slug: str, info: dict[str, Any]) -> list[LintWarning]:
+        """Validate writing style and formatting rules on a conceptual note body.
+
+        Args:
+            slug: Note filename stem.
+            info: Parsed note metadata and body dictionary.
+
+        Returns:
+            List of style warnings detected in the note body.
+
+        """
+        warnings: list[LintWarning] = []
+        raw_body = str(info.get("body", ""))
+        cleaned_body = FENCED_CODE_BLOCK_PATTERN.sub("", raw_body).strip()
+        file_path = str(info.get("relative_path", ""))
+
+        if not H1_TITLE_PATTERN.search(cleaned_body):
+            warnings.append(
+                LintWarning(
+                    type="missing_h1_title",
+                    file_path=file_path,
+                    message=f"Missing level-1 title (# Title) in the body of note [[{slug}]].",
+                )
+            )
+
+        bullet_matches = BULLET_POINT_PATTERN.findall(cleaned_body)
+        if bullet_matches:
+            warnings.append(
+                LintWarning(
+                    type="style_bullet_points",
+                    file_path=file_path,
+                    message=(
+                        f"Bullet points or numbered lists detected in the body of note [[{slug}]] "
+                        f"({len(bullet_matches)} item(s))."
+                    ),
+                    details={"count": len(bullet_matches)},
+                )
+            )
+
+        dash_matches = EM_DASH_PATTERN.findall(cleaned_body)
+        if dash_matches:
+            warnings.append(
+                LintWarning(
+                    type="style_em_dash",
+                    file_path=file_path,
+                    message=(
+                        f"Forbidden dash punctuation (— or –) detected in the body of "
+                        f"note [[{slug}]] ({len(dash_matches)} occurrence(s))."
+                    ),
+                    details={"count": len(dash_matches)},
+                )
+            )
+
+        detected_cliches: list[str] = []
+        for match in AI_SECTION_LABEL_PATTERN.finditer(cleaned_body):
+            term = match.group(0).strip()
+            if term and term not in detected_cliches:
+                detected_cliches.append(term)
+        for match in AI_CLICHE_PATTERN.finditer(cleaned_body):
+            term = match.group(0).strip()
+            if term and term.lower() not in {item.lower() for item in detected_cliches}:
+                detected_cliches.append(term)
+
+        if detected_cliches:
+            warnings.append(
+                LintWarning(
+                    type="style_ai_cliche",
+                    file_path=file_path,
+                    message=(
+                        f"AI cliché or rigid section label detected in note [[{slug}]]: "
+                        f"{', '.join(detected_cliches)}."
+                    ),
+                    details={"terms": detected_cliches},
+                )
+            )
+
+        return warnings
+
     def run(self) -> LintResult:
         """Run validation and return aggregated lint results.
 
@@ -640,7 +731,11 @@ class ZettelLinter:
                         )
                     )
 
-        # 5. Emergent patterns: bold terms in 3+ notes without their own note.
+            # 5. Writing style and formatting rules for active conceptual notes.
+            if not is_deprecated:
+                result.warnings.extend(self._validate_note_style(slug, info))
+
+        # 6. Emergent patterns: bold terms in 3+ notes without their own note.
         for term, occurrences in bold_terms_occurrences.items():
             unique_occurrences = list(set(occurrences))
             if len(unique_occurrences) >= 3:
@@ -734,8 +829,10 @@ def run_linter(
     fixes = []
 
     if fix_filenames:
-        fixes.extend(linter.apply_literature_filename_fixes())
-        linter.scan_vault()
+        filename_fixes = linter.apply_literature_filename_fixes()
+        fixes.extend(filename_fixes)
+        if filename_fixes:
+            linter.scan_vault()
     if fix_sources:
         sources_fixes = linter.apply_sources_format_fixes()
         fixes.extend(sources_fixes)
