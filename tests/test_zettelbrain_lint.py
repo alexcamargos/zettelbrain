@@ -496,3 +496,116 @@ def test_linter_handles_unreadable_file_without_unbound_local_error(
     assert "unreadable-note.md" in parsing_errors[0].file_path
     assert "Permission denied" in parsing_errors[0].message
 
+
+def test_linter_detects_missing_h1_title_and_style_violations(tmp_path: Path) -> None:
+    """Verifica a detecção determinística de desvios de estilo e clichês de IA.
+
+    Args:
+        tmp_path: Fixture nativa do pytest para diretórios temporários.
+
+    Returns:
+        None
+
+    Raises:
+        AssertionError: Se os avisos de estilo esperados não forem emitidos.
+
+    """
+    zettel_dir = tmp_path / "zettelbrain"
+    literature_dir = zettel_dir / "literature"
+    permanent_dir = zettel_dir / "permanent"
+    literature_dir.mkdir(parents=True)
+    permanent_dir.mkdir(parents=True)
+
+    violating_note = literature_dir / "lit-style-violations.md"
+    violating_note.write_text(
+        "---\n"
+        "type: literature\n"
+        "id: 202610181500\n"
+        'title: "Nota com Vícios de Estilo"\n'
+        "---\n"
+        "Introdução: No cenário contemporâneo, o modelo apresenta travessão — aqui.\n\n"
+        "- Item em lista proibida\n"
+        "1. Item numerado proibido\n\n"
+        "Ademais, portanto, conclui-se que o resultado converge.\n",
+        encoding="utf-8",
+    )
+
+    clean_note = permanent_dir / "perm-clean-style.md"
+    clean_note.write_text(
+        "---\n"
+        "type: permanent\n"
+        "id: 202610181501\n"
+        "sources:\n"
+        '  - "[[lit-style-violations]]"\n'
+        "---\n"
+        "# Estabilidade assintótica de estimadores sob heterocedasticidade\n\n"
+        "A variância condicional afeta diretamente a eficiência do estimador em amostras "
+        "finitas, exigindo correção robusta da matriz de covariância conforme discutido em "
+        "[[lit-style-violations]].\n\n"
+        "```python\n"
+        "# Comentário e lista dentro de bloco de código não devem acionar avisos\n"
+        "- item_ignorado — travessao_ignorado\n"
+        "```\n",
+        encoding="utf-8",
+    )
+
+    result = run_linter(zettel_dir)
+
+    violating_warnings = [
+        w for w in result.warnings if "lit-style-violations.md" in w.file_path
+    ]
+    violating_types = {w.type for w in violating_warnings}
+
+    assert "missing_h1_title" in violating_types
+    assert "style_bullet_points" in violating_types
+    assert "style_em_dash" in violating_types
+    assert "style_ai_cliche" in violating_types
+
+    clean_style_warnings = [
+        w
+        for w in result.warnings
+        if "perm-clean-style.md" in w.file_path
+        and w.type
+        in {"missing_h1_title", "style_bullet_points", "style_em_dash", "style_ai_cliche"}
+    ]
+    assert not clean_style_warnings
+
+
+def test_run_linter_avoids_redundant_scan_vault_when_no_fixes_applied(
+    tmp_path: Path,
+    mocker: MockerFixture,
+) -> None:
+    """Garante que run_linter execute scan_vault apenas uma vez quando não há correções.
+
+    Args:
+        tmp_path: Fixture nativa do pytest para diretórios temporários.
+        mocker: Fixture do pytest-mock.
+
+    Returns:
+        None
+
+    Raises:
+        AssertionError: Se scan_vault for invocado mais de uma vez sem necessidade.
+
+    """
+    zettel_dir = tmp_path / "zettelbrain"
+    literature_dir = zettel_dir / "literature"
+    literature_dir.mkdir(parents=True)
+
+    (literature_dir / "article-nota-limpa.md").write_text(
+        "---\n"
+        "type: literature\n"
+        "source_kind: web_article\n"
+        'title: "Nota Limpa"\n'
+        "---\n"
+        "# Nota Limpa\n\n"
+        "Prosa contínua válida sem correções pendentes.\n",
+        encoding="utf-8",
+    )
+
+    spy_scan = mocker.spy(ZettelLinter, "scan_vault")
+    run_linter(zettel_dir)
+
+    assert spy_scan.call_count == 1
+
+
