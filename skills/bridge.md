@@ -19,13 +19,12 @@ Acionado quando o usuário digitar `/bridge` ou disser `gemini "Execute a skill 
 Redija uma proposta de unificação conceitual ou modelagem híbrida para as duas notas identificadas. O texto gerado deve seguir estritamente as **Regras Globais de Estilo**:
 - Escrita exclusivamente em Português do Brasil (PT-BR).
 - É terminantemente proibido o uso de listas ou marcadores (bullet points).
-- Estruture o texto em exatamente dois parágrafos contínuos, sem usar rótulos literais como "Introdução" ou "Contexto":
-  - O **primeiro parágrafo** deve apresentar as duas notas parceiras de ponte, desconstruindo seus conceitos-chave de forma isolada e evidenciando a desconexão ou o "atrito criativo" original entre elas;
-  - O **segundo parágrafo** deve realizar a síntese unificadora, propondo um ponto de tangência teórico, uma modelagem híbrida aplicável ou uma hipótese de investigação que integre ambos os conceitos na prática de pesquisa.
+- Desenvolva o texto em parágrafos contínuos de prosa, sem usar rótulos artificiais de seção e sem impor número fixo de parágrafos, apresentando as duas notas parceiras de ponte com seus conceitos-chave, evidenciando o "atrito criativo" original entre elas e propondo a síntese unificadora, ponto de tangência teórico, modelagem híbrida aplicável ou hipótese de investigação que integre ambos os conceitos.
 - Use **negrito** exclusivamente para destacar constructos teóricos, variáveis analíticas, nomes de algoritmos e métricas técnicas centrais.
 - Não utilize travessões; garanta a coesão textual por meio de vírgulas e períodos diretos.
 - Não utilize emojis.
 - Mantenha o tom altamente formal, intelectual e analítico.
+- Aplique a camada de polimento da skill `/humanizer` para eliminar fórmulas artificiais de IA, mantendo o limite de 4 frases por parágrafo e cadência orgânica.
 
 ### Etapa 3: Persistência e Gravação de Rascunho
 1. Formate a síntese gerada com um frontmatter YAML simplificado contendo:
@@ -37,7 +36,7 @@ Redija uma proposta de unificação conceitual ou modelagem híbrida para as dua
    references: [[nome-exato-da-nota-a]], [[nome-exato-da-nota-b]]
    ---
    ```
-   Adicione em seguida um H1 com o título da ponte semântica e os dois parágrafos de prosa dissertativa gerados.
+   Adicione em seguida um H1 com o título da ponte semântica e os parágrafos de prosa dissertativa gerados.
 2. Salve o arquivo na pasta `zettelbrain/drafts/` com o nome formatado em minúsculas e separado por hifens: `bridge-[slug-da-nota-a]-e-[slug-da-nota-b].md` (substituindo acentos e caracteres especiais).
 3. Adicione o link para o rascunho criado na seção correspondente do `zettelbrain/index.md` (sob a seção de Rascunhos).
 4. Atualize o arquivo `.state/log.md` com a entrada de log sob a tag **`/bridge`**, detalhando o caminho do rascunho gerado, os arquivos lidos como insumos e o valor de similaridade cosseno retornado pelo servidor.
