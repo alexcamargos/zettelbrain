@@ -89,7 +89,14 @@ SKILL_DESCRIPTIONS: dict[str, str] = {
         "Encerra a sessão de pesquisa, consolida descobertas e atualiza .state/hot.md "
         "e .state/log.md."
     ),
+    "fact-check": (
+        "Auditoria adversarial de fatos, lógica e premissas contra fontes primárias e o cofre."
+    ),
     "ghost": "Redige rascunhos acadêmicos e sínteses textuais densas a partir de notas no cofre.",
+    "humanizer": (
+        "Filtro de edição e polimento estrito para remover vícios de LLM e garantir "
+        "fluidez e legibilidade em PT-BR."
+    ),
     "lint": (
         "Audita integridade estrutural do cofre, verifica links órfãos e regenera "
         "zettelbrain/overview.md."
