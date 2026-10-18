@@ -23,10 +23,7 @@ Acionado quando o usuário disser `gemini "Execute a skill /recall sobre [tópic
 ### Etapa 2: Síntese e Exposição (Aplicação Rigorosa de Estilo)
 Apresente ao usuário um dossiê preliminar com os achados. A geração deste texto DEVE respeitar integralmente as Regras Globais de Estilo:
 - É terminantemente proibido o uso de listas ou marcadores (bullet points).
-- O texto deve ser contínuo e estruturado logicamente em três etapas, sendo terminantemente proibido gravar os rótulos literais "Introdução", "Contexto" ou "Fechamento" no corpo do texto:
-  - O **primeiro parágrafo** deve apresentar o cenário consolidado da base sobre o tema;
-  - O **segundo parágrafo** deve desenvolver conectando os diferentes autores e dados lidos;
-  - O **terceiro parágrafo** (conclusão) deve trazer um resumo sintético do panorama atual.
+- O texto deve ser contínuo e desenvolvido em parágrafos de prosa, sem gravar rótulos artificiais de seção no corpo do texto, apresentando o cenário consolidado da base sobre o tema, conectando os diferentes autores e dados lidos e sintetizando o panorama atual e eventuais lacunas.
 - Utilize **negrito** exclusivamente para destacar constructos teóricos, variáveis matemáticas ou palavras-chave cruciais para a recuperação da informação.
 - Não utilize travessões; construa a fluidez da explicação por meio de vírgulas e períodos curtos e diretos.
 - O tom deve ser estritamente analítico e adequado para a absorção por uma audiência com vasta vivência corporativa e analítica.
@@ -38,7 +35,7 @@ Apresente ao usuário um dossiê preliminar com os achados. A geração deste te
 
 ### Etapa 4: Fechamento de Lacuna no Cofre
 1. Se a avaliação da Etapa 1 indicar lacuna total ou parcial em tema relevante para o cofre, crie uma **Nota Permanente** em `zettelbrain/permanent/` mesmo sem ingestão de nova fonte externa.
-2. A nota criada deve seguir integralmente o padrão do `ZETTELBRAIN.md`: frontmatter de permanente, `# Título da nota` após o YAML, texto em prosa contínua com progressão em no mínimo três parágrafos (apresentação, desenvolvimento e conclusão) sem imprimir rótulos literais, sem bullet points e com negrito apenas para conceitos-chave.
+2. A nota criada deve seguir integralmente o padrão do `ZETTELBRAIN.md`: frontmatter de permanente, `# Título da nota` após o YAML, texto atômico em prosa contínua estruturado em parágrafos (sem impor número fixo de parágrafos e sem imprimir rótulos literais de seção), sem bullet points e com negrito apenas para conceitos-chave.
 3. Ao criar a nova permanente, conecte o tema ao grafo com `[[wikilinks]]` para notas relacionadas já existentes. Quando houver duas ou mais candidatas claras, inclua pelo menos dois wikilinks no corpo da nota.
 4. Atualize `zettelbrain/index.md` para incluir a nova nota na seção apropriada.
 5. Se não houver notas relacionadas suficientes para cumprir ligação mínima, registre a limitação no `.state/log.md` nesta execução.
