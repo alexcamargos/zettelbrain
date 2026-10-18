@@ -24,25 +24,22 @@ Acionado quando o usuário digitar `/research-deep [termo]` ou disser `gemini "E
 Redija um relatório detalhando os resultados obtidos. O texto deve seguir rigorosamente as **Regras Globais de Estilo**:
 - Escrita exclusivamente em Português do Brasil (PT-BR).
 - É terminantemente proibido o uso de listas ou marcadores (bullet points).
-- Estruture o corpo do texto em exatamente três parágrafos contínuos, sem usar rótulos literais como "Introdução", "Contexto" ou "Fechamento" no corpo do texto:
-  - O **primeiro parágrafo** deve descrever a lacuna conceitual ou o tema consultado, justificando a importância teórica da busca no contexto atual da pesquisa do cofre;
-  - O **segundo parágrafo** deve apresentar as conclusões dos 3 artigos selecionados, citando os títulos, principais autores e as variáveis ou metodologias por eles introduzidas, correlacionando-as diretamente;
-  - O **terceiro parágrafo** (conclusão) deve apontar qual dos artigos deve ser baixado para a pasta `raw/papers/` e ser processado prioritariamente via `/paper`, destacando as hipóteses acadêmicas que serão refinadas a partir dele.
+- Desenvolva o corpo do texto em parágrafos contínuos de prosa, sem usar rótulos artificiais de seção e sem impor número fixo de parágrafos, descrevendo a lacuna conceitual ou o tema consultado no contexto atual da pesquisa do cofre, apresentando e correlacionando as conclusões, variáveis e metodologias dos 3 artigos selecionados, e apontando qual dos artigos deve ser baixado para a pasta `raw/papers/` e processado prioritariamente via `/paper`.
 - Use **negrito** exclusivamente para destacar constructos teóricos, variáveis analíticas, nomes de algoritmos e métricas técnicas centrais.
 - Não utilize travessões ou emojis.
 - O tom deve ser rigoroso, analítico e de alto nível acadêmico.
 
 ### Etapa 4: Gravação do Relatório e Atualização do Sistema
-1. Formate o relatório como um arquivo Markdown bruto em `raw/articles/pesquisa-profunda-[slug-da-query]-[data].md`. Insira no topo do arquivo um frontmatter YAML simplificado:
+1. Formate o relatório como um rascunho em `zettelbrain/drafts/pesquisa-profunda-[slug-da-query]-[data].md`. Insira no topo do arquivo um frontmatter YAML seguido de título H1:
    ```yaml
    ---
-   type: literature
-   source_kind: web_article
+   type: draft
+   id: YYYYMMDDHHMM
    title: "Relatório de Pesquisa Profunda: [Query]"
    retrieved_at: "AAAA-MM-DD"
    confidence: medium
    ---
    ```
-2. Adicione o link semântico do novo arquivo na seção apropriada do índice em `zettelbrain/index.md` (sob a lista de artigos em Rascunhos ou Artigos Brutos).
-3. Atualize o `.state/log.md` sob a tag **`/research-deep`**, documentando o termo pesquisado, as APIs científicas acionadas, os títulos dos 3 artigos obtidos e o caminho relativo do arquivo gerado.
-4. Caso o relatório recomende o download do PDF completo, insira o lembrete de download na conclusão da sessão em `.state/hot.md`.
+2. Adicione o link semântico do novo arquivo na seção de **Rascunhos** do índice em `zettelbrain/index.md`.
+3. Atualize o `.state/log.md` sob a tag **`/research-deep`**, documentando o termo pesquisado, as APIs científicas acionadas, os títulos dos 3 artigos obtidos e o caminho relativo do arquivo gerado em `zettelbrain/drafts/`.
+4. Caso o relatório recomende o download do PDF completo, insira o lembrete de download em `.state/hot.md`.
