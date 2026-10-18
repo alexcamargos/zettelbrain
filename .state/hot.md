@@ -1,4 +1,4 @@
-Este arquivo é o cache quente da pesquisa. O skill `/close` sobrescreve este conteúdo ao fim de cada sessão com três blocos contínuos no estilo do `ZETTELBRAIN.md`.
+Este arquivo é o cache quente da pesquisa. O skill `/close` sobrescreve este conteúdo ao fim de cada sessão em prosa contínua no estilo do `ZETTELBRAIN.md`.
 
 Após clonar o repositório, execute `/start` na raiz do projeto para carregar o contexto a partir deste arquivo e do `.state/log.md`.
 
